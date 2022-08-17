@@ -1,15 +1,14 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('sample.jpg')
+img = cv2.imread('../images/test.png')
 
 # HSV変換
 img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
 
-
 # 値の範囲を指定してマスク生成
-lower = np.array([159, 127,0])
-upper = np.array([177, 255, 255])
+lower = np.array([143, 93, 33])
+upper = np.array([158, 136, 65])
 img_mask = cv2.inRange(img_hsv, lower, upper)
 
 # イメージの表示
