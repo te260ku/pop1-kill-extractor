@@ -1,4 +1,5 @@
 import cv2
+from cv2 import imshow
 import numpy as np
 
 
@@ -80,7 +81,7 @@ def proc(img, current_sec=0):
             img_inner_mask = np.zeros_like(img)   # 内部の二値化画像
             cv2.drawContours(img_inner_mask, [cnt], -1, (255, 255, 255), thickness=-1)
             kernel = np.ones((12,12),np.uint8)
-            img_dilation = cv2.dilate(img_inner_mask, kernel, iterations=3)   # 内部の二値化膨張画像
+            img_dilation = cv2.dilate(img_inner_mask, kernel, iterations=1)   # 内部の二値化膨張画像
             img_inner_color = cv2.bitwise_and(img, img_inner_mask)  # 内部のカラー画像
             img_inner_color_dilation = cv2.bitwise_and(img, img_dilation)   # 内部のカラー膨張画像
             img_border = cv2.bitwise_xor(img_inner_color, img_inner_color_dilation)  # 枠のカラー
@@ -88,13 +89,12 @@ def proc(img, current_sec=0):
             img_hsv_border = cv2.cvtColor(img_border, cv2.COLOR_BGR2HSV_FULL)
             # マスク画像を生成
             img_mask_border = cv2.inRange(img_hsv_border, lower_border, upper_border)
-
             # マスク画像中のキルログの枠線の面積を計算
             white_area = cv2.countNonZero(img_mask_border)
 
             # 検出された白い枠線の面積が指定した範囲内だった場合、キルログとして判定
-            if (400 < white_area < 1000):
-                # 背景によってはインフォーメーションログを誤検出する場合があるので、枠の輪郭抽出→面積・頂点数の判別を入れるといいかもしれない
+            if (400 < white_area < 500):
+                # 背景によってはインフォーメーションログを誤検出する場合がある
 
                 cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
 
