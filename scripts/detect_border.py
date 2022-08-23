@@ -16,18 +16,18 @@ def proc(img):
     #中央値フィルタ
     img_mask = cv2.medianBlur(img_mask_raw, 7)
 
-    edge = cv2.Canny(img_mask, 100, 200)
-    height, width = edge.shape
-    ksize = int(max(height, width) * 0.01)
-    ksize = ksize // 2 * 2 + 1
-    #edge = cv2.dilate(edge, np.ones((ksize, ksize), dtype='uint8'))
-    #edge = cv2.erode(edge, np.ones((ksize, ksize), dtype='uint8'))
-    edge = cv2.morphologyEx(edge, cv2.MORPH_CLOSE, np.ones((ksize, ksize), dtype='uint8'))
+    # edge = cv2.Canny(img_mask, 100, 200)
+    # height, width = edge.shape
+    # ksize = int(max(height, width) * 0.01)
+    # ksize = ksize // 2 * 2 + 1
+    # #edge = cv2.dilate(edge, np.ones((ksize, ksize), dtype='uint8'))
+    # #edge = cv2.erode(edge, np.ones((ksize, ksize), dtype='uint8'))
+    # edge = cv2.morphologyEx(edge, cv2.MORPH_CLOSE, np.ones((ksize, ksize), dtype='uint8'))
 
-    contours, _ = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # contours, _ = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # contours, hierarchy = cv2.findContours(
-    # img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+    img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     result = img.copy()
     # cv2.drawContours(result, contours, -1, (255, 0, 0), 3, cv2.LINE_AA)
@@ -59,29 +59,21 @@ def proc(img):
 
         area = cv2.contourArea(cnt)
 
-        
-
-        
-        
         if (area > 1000):
-
             cv2.drawContours(result, [approx], -1, (255, 0, 0), thickness=10)
             position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
             px, py = position
             cv2.putText(result, text, (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
             
             mask = np.zeros_like(img)
-
-            cv2.drawContours(mask, [approx], -1, (255, 255, 255), thickness=-1)
-            
+            cv2.drawContours(mask, [cnt], -1, (255, 255, 255), thickness=-1)
             masked = img & mask
             # HSV変換
             img_hsv_2 = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV_FULL)
-
             # 値の範囲を指定してマスク生成
-            img_mask_raw_2 = cv2.inRange(img_hsv_2, lower, upper)
-
+            img_mask_raw_2 = cv2.inRange(img_hsv_2, lower_inner, upper_inner)
             white_area = cv2.countNonZero(img_mask_raw_2)
+            print(area)
             print(white_area)
 
             if (white_area > 50000):
@@ -97,8 +89,8 @@ def proc(img):
 
 
 """ 青 """
-lower = np.array([143, 93, 33])
-upper = np.array([160, 136, 65])
+lower_inner = np.array([143, 93, 33])
+upper_inner = np.array([160, 136, 65])
 """ 白 """
 lower_border = np.array([0,0,156])
 upper_border = np.array([167,29,255])
