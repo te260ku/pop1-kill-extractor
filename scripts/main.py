@@ -9,6 +9,8 @@ upper_inner = np.array([160, 136, 65])
 lower_border = np.array([0,0,210])
 upper_border = np.array([169,21,233])
 
+font = cv2.FONT_HERSHEY_SIMPLEX
+
 detection_count = 0
 detection_continuation_time = 0
 detected = False
@@ -31,16 +33,19 @@ def proc(img, current_sec=0):
     global max_frame_count
     global fps
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    result = img.copy()
+    frame_count += 1
 
     # 動画のfpsを計測
-    if frame_count == max_frame_count:
+    if frame_count % 10 == 0:
         tm.stop()
         fps = max_frame_count / tm.getTimeSec()
         tm.reset()
         tm.start()
-        frame_count = 0
+
+    if (frame_count % 2 == 0):
+        return
+
+    result = img.copy()
 
     '''************************************************************
     ** 画像処理
@@ -112,8 +117,6 @@ def proc(img, current_sec=0):
     cv2.putText(result, 'KILL: ' + str(detection_count), (10, 80), font, 1.0, (0, 255, 0), 2)
     cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
 
-    frame_count += 1
-    
     cv2.imshow('image', result)
     
 
