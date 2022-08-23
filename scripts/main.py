@@ -104,7 +104,8 @@ def proc(img, current_sec=0):
                 if (detected == False):
                     detected = True
                     detection_count += 1
-                    # print(current_sec)
+                    estimated_kill_time = '{{:.{:d}f}}'.format(2).format(current_sec/1000)
+                    print('Estimated Kill Time: {}'.format(estimated_kill_time))
 
     """ 検出の重複を防ぐための処理 """
     if (detected):
@@ -118,8 +119,8 @@ def proc(img, current_sec=0):
     cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
 
     cv2.imshow('image', result)
-    
 
+    
 def proc_img(img):
     proc(img)
     cv2.waitKey(0)
