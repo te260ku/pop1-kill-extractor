@@ -12,13 +12,11 @@ def draw():
     sg.theme('LightBlue')
 
     layout_1 = [  
-        [sg.Text('ファイル', size=(10, 1)), sg.Input(), sg.FileBrowse('ファイルを選択', key='inputFilePath')], 
+        [sg.Text('ファイル'), sg.Input(), sg.FileBrowse('ファイルを選択', key='inputFilePath')], 
         [sg.Button('開始', key='startButton'), sg.Button('停止', key='stopButton'), sg.Button('アプリ終了', key='exitButton')], 
         [sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))],  
-        [sg.Text('', key='analysisStatus')], 
-        [
-        sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER A-'),
-        sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER B-')],
+        # [sg.Text('', key='analysisStatus')], 
+        [sg.Text('', key='killCountText', font=(gui_font, 13))], 
     ]
 
     layout_2 = [
@@ -26,16 +24,20 @@ def draw():
     ]
 
     layout_3 = [
-        [sg.Output(size=(80,20))]
+        [sg.Output(size=(80,20))], 
+        [sg.Button('コピー', key='copyButton'), sg.Button('停止', key='saveButton')]
     ]
+
+
 
 
     layout=[
         [sg.Frame('Group 1', layout_1, size=(480, 200))], 
         [
-            sg.Frame('Group 2', layout_2, size=(1920*0.2, 1080*0.2)), 
-            sg.Frame('Group 3', layout_3, size=(230, 1080*0.2)), 
+            sg.Frame('Group 2', layout_2, size=(1920*0.2, 1080*0.2+50)), 
+            sg.Frame('Group 3', layout_3, size=(230, 1080*0.2+50)), 
         ], 
+        
     ]
                 
     # ウィンドウの生成
@@ -71,6 +73,13 @@ def draw():
             tmp = np.zeros_like(frame)
             bytes = cv2.imencode('.png', tmp)[1].tobytes()
             window['previewImage'].update(data=bytes)
+
+        if event == 'copyButton':
+            main.copy_kill_time()
+
+        kill_count_text = 'キル数: ' + str(main.detection_count)
+        window['killCountText'].update(kill_count_text)
+        
 
     cap.release()
     window.close()

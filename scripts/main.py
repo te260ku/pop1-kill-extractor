@@ -1,3 +1,4 @@
+from os import kill
 import cv2
 import numpy as np
 import pyperclip
@@ -27,7 +28,9 @@ def nothing(x):
     pass
 
 
-
+def copy_kill_time():
+    kill_time_str = ",".join(map(str, kill_time))
+    pyperclip.copy(kill_time_str)
 
 
 def proc(img, current_sec=0):
