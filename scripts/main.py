@@ -42,8 +42,8 @@ def proc(img, current_sec=0):
         tm.reset()
         tm.start()
 
-    if (frame_count % 2 == 0):
-        return
+    # if (frame_count % 2 == 0):
+    #     return
 
     result = img.copy()
 
@@ -70,12 +70,6 @@ def proc(img, current_sec=0):
         
         # 輪郭が四角形かつ指定した値よりも大きい面積かどうかを判定
         if (n_gon == 4 and inner_area > 30000):
-            # 輪郭とテキストを描画する
-            cv2.drawContours(result, [approx], -1, (255, 0, 0), 3)
-            position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
-            px, py = position
-            cv2.putText(result, 'rec', (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
-
             """ キルログ内部の領域の二値化画像に膨張処理をかけて枠線を含むマスク画像を生成する """
             img_inner_mask = np.zeros_like(img)   # 内部の二値化画像
             cv2.drawContours(img_inner_mask, [cnt], -1, (255, 255, 255), thickness=-1)
@@ -95,10 +89,16 @@ def proc(img, current_sec=0):
             if (400 < white_area < 500):
                 # 背景によってはインフォーメーションログを誤検出する場合がある
 
+                # 輪郭とテキストを描画する
+                cv2.drawContours(result, [approx], -1, (255, 0, 0), 3)
+                position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
+                px, py = position
+                cv2.putText(result, 'rec', (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+
                 cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
 
                 # print('inner area: {}'.format(area))
-                # print('border area: {}'.format(white_area))１
+                # print('border area: {}'.format(white_area))
 
                 if (detected == False):
                     detected = True
@@ -117,16 +117,19 @@ def proc(img, current_sec=0):
     cv2.putText(result, 'KILL: ' + str(detection_count), (10, 80), font, 1.0, (0, 255, 0), 2)
     cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
 
-    cv2.imshow('image', result)
+    # cv2.imshow('image', result)
+
+    return result
 
     
 def proc_img(img):
-    proc(img)
+    tmp = proc(img)
+    cv2.imshow('image', tmp)
     cv2.waitKey(0)
 
 
 def proc_video(cap):
-    tm.start()
+    start_proc()
 
     while(cap.isOpened()):
         # フレームを取得
@@ -134,16 +137,21 @@ def proc_video(cap):
         if not ret:
             break
         current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
-        proc(frame, current_sec=current_sec)
+        tmp = proc(frame, current_sec=current_sec)
+        cv2.imshow('image', tmp)
         # qキーが押されたら途中終了
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
     cap.release()
 
 
+def start_proc():
+    tm.start()
+
+
 def main():
     img = cv2.imread('../images/test_1.png')
-    cap = cv2.VideoCapture('../videos/test_full.mp4')
+    cap = cv2.VideoCapture('../videos/test_2.mp4')
 
     # ウィンドウの調整
     if (cap.isOpened()):
@@ -167,10 +175,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # args = sys.argv
-    # if len(args) == 1:
-    #     if type(args[1]) is str:
-    #         file_path = args[1]
-    #         if file_path.endswith('.png') or file_path.endswith('.jpg'):
-    #             pass
     main()
