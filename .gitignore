@@ -133,3 +133,4 @@ dmypy.json
 .LSOverride
 
 videos/
+csv/
