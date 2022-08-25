@@ -1,69 +1,88 @@
 import PySimpleGUI as sg
 import cv2
 import main
+import numpy as np
 
-sg.theme('LightBlue')
 
 gui_font = 'Meiryo UI'
 
 processing = False
 
-layout_1 = [  
+
+def main2():
+    sg.theme('LightBlue')
+
+    layout_1 = [  
     [sg.Text('ファイル', size=(10, 1)), sg.Input(), sg.FileBrowse('ファイルを選択', key='inputFilePath')], 
     # [sg.Text('ここは2行目：適当に文字を入力してください'), sg.InputText()],
-    [sg.Button('開始', key='startButton'), sg.Button('停止', key='stopButton'), sg.Button('アプリ終了', key='exit')], 
+    [sg.Button('開始', key='startButton'), sg.Button('停止', key='stopButton'), sg.Button('アプリ終了', key='exitButton')], 
     [sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))],  
-]
-
-layout_2 = [
     [sg.Text('', key='analysisStatus')], 
-    [sg.Image(filename='', key='previewImage',)]
-]
-
-layout_3 = [
-    [sg.Output(size=(80,20))]
-]
-
-
-layout=[
-    [sg.Frame('Group 1', layout_1, size=(480, 100))], 
     [
-        sg.Frame('Group 2', layout_2, size=(230, 200)), 
-        sg.Frame('Group 3', layout_3, size=(230, 200)), 
-    ], 
-]
-            
-# ウィンドウの生成
-window = sg.Window('サンプルプログラム', layout, size=(500, 500))
+       sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER A-'),
+       sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER B-')],
+    ]
 
-
-
-# イベントループ
-while True:
-    event, values = window.read()
-    if event == sg.WIN_CLOSED or event == 'exit':
-        break
-    elif event == 'startButton':
-        window['analysisStatus'].update('Processing...')
-        cap = cv2.VideoCapture('../videos/test_full.mp4')
-        processing = True
-    elif event == 'stopButton':
-        window['analysisStatus'].update('')
-        recording = False
-
-    
-    if (processing == True):
+    layout_2 = [
         
+        [sg.Image(filename='', key='previewImage')]
+    ]
+
+    layout_3 = [
         
-        # フレームを取得
+        [sg.Output(size=(80,20))]
+    ]
+
+
+    layout=[
+        [sg.Frame('Group 1', layout_1, size=(480, 200))], 
+        [
+            sg.Frame('Group 2', layout_2, size=(1920*0.2, 1080*0.2)), 
+            sg.Frame('Group 3', layout_3, size=(230, 1080*0.2)), 
+        ], 
+    ]
+                
+    # ウィンドウの生成
+    window = sg.Window('サンプルプログラム', layout)
+
+
+    cap = cv2.VideoCapture('../videos/test_1.mp4')
+
+    main.start_proc()
+
+
+    while True:
+        #window.read(timeout=0) timeout 秒数。0だとスムーズ、数字が多いとカクカク。
+        event, values = window.read(timeout=100)
+        #Exitボタンが押されたら、またはウィンドウの閉じるボタンが押されたら終了
+        if event == 'exitButton' or event == sg.WIN_CLOSED:
+            break
+
+        #read()メソッドの返り値は、フレームの画像が読み込めたかどうかを示すbool値と、画像の配列ndarrayのタプル。
         ret, frame = cap.read()
-        
-        if ret is True:
-            current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
-            result = cv2.imencode('.png', frame)[1].tobytes() 
-            # result = main.proc(frame, current_sec=current_sec)
-            window['previewImage'].update(data=result)
-            
 
-cap.release()
-window.close()
+        if not ret:
+            continue
+
+        
+        current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
+
+        
+
+        frame = main.proc(frame, current_sec=current_sec)
+        frame = cv2.resize(frame, dsize=None, fx=0.2, fy=0.2)
+        
+        if values['previewCheckbox']:
+            bytes = cv2.imencode('.png', frame)[1].tobytes()
+            window['previewImage'].update(data=bytes)
+        else:
+            tmp = np.zeros_like(frame)
+            bytes = cv2.imencode('.png', tmp)[1].tobytes()
+            window['previewImage'].update(data=bytes)
+
+    cap.release()
+    window.close()
+
+
+if __name__ == '__main__':
+    main2()
