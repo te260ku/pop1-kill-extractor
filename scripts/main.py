@@ -1,5 +1,4 @@
 import cv2
-from cv2 import imshow
 import numpy as np
 
 
@@ -99,7 +98,7 @@ def proc(img, current_sec=0):
                 cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
 
                 # print('inner area: {}'.format(area))
-                # print('border area: {}'.format(white_area))
+                # print('border area: {}'.format(white_area))１
 
                 if (detected == False):
                     detected = True
