@@ -2,6 +2,8 @@ import PySimpleGUI as sg
 import cv2
 import main
 import numpy as np
+import mimetypes
+import re
 
 gui_font = 'Meiryo UI'
 
@@ -59,7 +61,7 @@ def draw():
     window = sg.Window('POP1 Kill Extractor', layout)
 
 
-    cap = cv2.VideoCapture('../videos/test_1.mp4')
+    
 
     main.start_proc()
 
@@ -72,8 +74,23 @@ def draw():
             break
 
         if event == 'startButton':
-            processing = True
-            window['processingStatusText'].update('Processing...')
+            if (processing == False):
+                # cap = cv2.VideoCapture('../videos/test_1.mp4')
+
+                file_path = values['inputFilePath']
+                if (file_path == ''):
+                    continue
+                mime = mimetypes.guess_type(file_path)
+                if (mime[0].startswith('video/')):
+                    cap = cv2.VideoCapture(file_path)
+                    if (cap.isOpened() == False):
+                        continue
+                    window['processingStatusText'].update('Processing...')
+                    processing = True
+                else:
+                    sg.popup('ファイル形式が無効です', title='Error')
+
+                
         elif event == 'stopButton':
             processing = False
             window['processingStatusText'].update('Waiting...')
