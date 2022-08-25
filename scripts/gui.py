@@ -17,6 +17,7 @@ def draw():
         [sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))],  
         # [sg.Text('', key='analysisStatus')], 
         [sg.Text('', key='killCountText', font=(gui_font, 13))], 
+        [sg.Text('', key='fpsText', font=(gui_font, 13))], 
     ]
 
     layout_2 = [
@@ -77,8 +78,11 @@ def draw():
         if event == 'copyButton':
             main.copy_kill_time()
 
-        kill_count_text = 'キル数: ' + str(main.detection_count)
+        kill_count_text = 'キル数: {}'.format(main.detection_count)
         window['killCountText'].update(kill_count_text)
+
+        fps_text = 'fps: {:.2f}'.format(main.fps)
+        window['fpsText'].update(fps_text)
         
 
     cap.release()
