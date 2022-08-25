@@ -14,34 +14,32 @@ def draw():
     ************************************************************'''
     sg.theme('LightBlue')
 
-    file_select_button_comp = sg.FileBrowse('ファイルを選択', key='inputFilePath')
+    file_select_button_comp = sg.FileBrowse('ファイルを選択', key='inputFilePath', font=(gui_font, 14))
 
     start_button_comp = sg.Button('開始', key='startButton', font=(gui_font, 14))
     stop_button_comp = sg.Button('停止', key='stopButton', font=(gui_font, 14))
     exit_button_comp = sg.Button('アプリ終了', key='exitButton', font=(gui_font, 14))
     preview_checkbox_comp = sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 14))
-    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14))
+    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14), expand_x=True, background_color='#37B507')
 
     preview_image_comp = sg.Image(filename='../images/initial_image.png', key='previewImage')
 
-    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14))
-    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14))
-    kill_time_log_comp = sg.Output(size=(80,12))
+    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14), text_color='#000', background_color='#37B507', size=(10,1))
+    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14), text_color='#000', background_color='#37B507', size=(10, 1))
+
+    kill_time_log_comp = sg.Output(size=(28,15))
     copy_button_comp = sg.Button('コピー', key='copyButton', font=(gui_font, 14))
     save_button_comp = sg.Button('保存', key='saveButton', font=(gui_font, 14))
 
-    progress_text_comp = sg.Text('0%', key='progressText', font=(gui_font, 14))
-    progress_bar_comp = sg.ProgressBar(1, orientation='h', size=(38.5,20), key='progressBar')
+    progress_text_comp = sg.Text('0%', key='progressText', font=(gui_font, 14), size=(5,1))
+    progress_bar_comp = sg.ProgressBar(100, orientation='h', size=(36.5,20), key='progressBar')
 
-
-    
 
     layout_1 = [  
         [sg.Text('ファイル', font=(gui_font, 14)), sg.Input(font=(gui_font, 14)), file_select_button_comp], 
         [preview_checkbox_comp],  
         [start_button_comp, stop_button_comp, exit_button_comp], 
         [processing_status_text_comp], 
-        # [table_comp]
     ]
 
     layout_2 = [
@@ -50,25 +48,24 @@ def draw():
     ]
 
     layout_3 = [
-        [kill_count_text_comp, fps_text_comp], 
+        [kill_count_text_comp], 
+        [fps_text_comp], 
         [kill_time_log_comp],  
         [copy_button_comp, save_button_comp]
     ]
 
 
     layout=[
-        [sg.Frame('Setting', layout_1, size=(1920*0.2+200+30, 200))], 
+        [sg.Frame('Setting', layout_1, size=(1920*0.2+200+25, 150))], 
         [
-            sg.Frame('Preview', layout_2, size=(1920*0.2+20, 1080*0.2+100)), 
-            sg.Frame('Log', layout_3, size=(200, 1080*0.2+100)), 
+            sg.Frame('Preview', layout_2, size=(1920*0.2+15, 1080*0.2+80)), 
+            sg.Frame('Log', layout_3, size=(200, 1080*0.2+80)), 
         ], 
     ]
                 
     # ウィンドウの生成
     window = sg.Window('POP1 Kill Extractor', layout)
 
-
-    
 
     main.start_proc()
 
@@ -119,9 +116,9 @@ def draw():
 
             current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
 
-            progress_value = '{:.3f}'.format(main.frame_count/cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            window['progressBar'].update(float(progress_value))
-            window['progressText'].update(progress_value)
+            progress_value = float('{:.1f}'.format((main.frame_count/cap.get(cv2.CAP_PROP_FRAME_COUNT))*100))
+            window['progressBar'].update(progress_value)
+            window['progressText'].update('{}%'.format(str(progress_value)))
             
             frame = main.proc(frame, current_sec=current_sec)
             frame = cv2.resize(frame, dsize=None, fx=0.2, fy=0.2)
@@ -134,10 +131,11 @@ def draw():
                 bytes = cv2.imencode('.png', tmp)[1].tobytes()
                 window['previewImage'].update(data=bytes)
 
+
         kill_count_text = 'キル数: {}'.format(main.detection_count)
         window['killCountText'].update(kill_count_text)
 
-        fps_text = 'fps: {:.2f}'.format(main.fps)
+        fps_text = 'FPS: {:.2f}'.format(main.fps)
         window['fpsText'].update(fps_text)
         
 
