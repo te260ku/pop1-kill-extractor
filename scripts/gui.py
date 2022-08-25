@@ -3,7 +3,6 @@ import cv2
 import main
 import numpy as np
 import mimetypes
-import re
 
 gui_font = 'Meiryo UI'
 
@@ -17,29 +16,37 @@ def draw():
 
     file_select_button_comp = sg.FileBrowse('ファイルを選択', key='inputFilePath')
 
-    start_button_comp = sg.Button('開始', key='startButton')
-    stop_button_comp = sg.Button('停止', key='stopButton')
-    exit_button_comp = sg.Button('アプリ終了', key='exitButton')
-    preview_checkbox_comp = sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))
-    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 13))
+    start_button_comp = sg.Button('開始', key='startButton', font=(gui_font, 14))
+    stop_button_comp = sg.Button('停止', key='stopButton', font=(gui_font, 14))
+    exit_button_comp = sg.Button('アプリ終了', key='exitButton', font=(gui_font, 14))
+    preview_checkbox_comp = sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 14))
+    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14))
 
     preview_image_comp = sg.Image(filename='../images/initial_image.png', key='previewImage')
 
-    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 13))
-    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 13))
+    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14))
+    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14))
     kill_time_log_comp = sg.Output(size=(80,12))
-    copy_button_comp = sg.Button('コピー', key='copyButton')
-    save_button_comp = sg.Button('停止', key='saveButton')
+    copy_button_comp = sg.Button('コピー', key='copyButton', font=(gui_font, 14))
+    save_button_comp = sg.Button('保存', key='saveButton', font=(gui_font, 14))
+
+    progress_text_comp = sg.Text('0%', key='progressText', font=(gui_font, 14))
+    progress_bar_comp = sg.ProgressBar(1, orientation='h', size=(38.5,20), key='progressBar')
+
+
+    
 
     layout_1 = [  
-        [sg.Text('ファイル'), sg.Input(), file_select_button_comp], 
-        [start_button_comp, stop_button_comp, exit_button_comp], 
+        [sg.Text('ファイル', font=(gui_font, 14)), sg.Input(font=(gui_font, 14)), file_select_button_comp], 
         [preview_checkbox_comp],  
+        [start_button_comp, stop_button_comp, exit_button_comp], 
         [processing_status_text_comp], 
+        # [table_comp]
     ]
 
     layout_2 = [
         [preview_image_comp], 
+        [progress_text_comp, progress_bar_comp], 
     ]
 
     layout_3 = [
@@ -50,9 +57,9 @@ def draw():
 
 
     layout=[
-        [sg.Frame('Setting', layout_1, size=(1920*0.2+200+10, 150))], 
+        [sg.Frame('Setting', layout_1, size=(1920*0.2+200+30, 200))], 
         [
-            sg.Frame('Preview', layout_2, size=(1920*0.2, 1080*0.2+100)), 
+            sg.Frame('Preview', layout_2, size=(1920*0.2+20, 1080*0.2+100)), 
             sg.Frame('Log', layout_3, size=(200, 1080*0.2+100)), 
         ], 
     ]
@@ -69,6 +76,8 @@ def draw():
     while True:
         # timeout: 小さいほど滑らか
         event, values = window.read(timeout=100)
+
+        
         
         if event == 'exitButton' or event == sg.WIN_CLOSED:
             break
@@ -96,14 +105,24 @@ def draw():
             window['processingStatusText'].update('Waiting...')
         elif event == 'copyButton':
             main.copy_kill_time()
+        elif event == 'saveButton':
+            value = sg.popup_get_file('', save_as=True, title='保存先を選択')
+            if value is not None:
+                main.save_kill_time(value)
+            
 
         if (processing == True):
             ret, frame = cap.read()
             if not ret:
+                window['progressBar'].update(1)
                 continue
 
             current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
 
+            progress_value = '{:.3f}'.format(main.frame_count/cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            window['progressBar'].update(float(progress_value))
+            window['progressText'].update(progress_value)
+            
             frame = main.proc(frame, current_sec=current_sec)
             frame = cv2.resize(frame, dsize=None, fx=0.2, fy=0.2)
             
