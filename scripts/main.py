@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pyperclip
 
 
 """ 青 """
@@ -14,6 +15,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 detection_count = 0
 detection_continuation_time = 0
 detected = False
+kill_time = []
 
 frame_count = 0
 max_frame_count = 10
@@ -25,12 +27,14 @@ def nothing(x):
     pass
 
 
+
+
+
 def proc(img, current_sec=0):
     global detection_count
     global detection_continuation_time
     global detected
     global frame_count
-    global max_frame_count
     global fps
 
     frame_count += 1
@@ -104,6 +108,7 @@ def proc(img, current_sec=0):
                     detected = True
                     detection_count += 1
                     estimated_kill_time = '{{:.{:d}f}}'.format(2).format(current_sec/1000)
+                    kill_time.append(estimated_kill_time)
                     print('Estimated Kill Time: {}'.format(estimated_kill_time))
 
     """ 検出の重複を防ぐための処理 """
