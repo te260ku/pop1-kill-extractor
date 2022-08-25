@@ -3,33 +3,29 @@ import cv2
 import main
 import numpy as np
 
-
 gui_font = 'Meiryo UI'
 
-processing = False
-
-
-def main2():
+def draw():
+    '''************************************************************
+    ** レイアウトの定義
+    ************************************************************'''
     sg.theme('LightBlue')
 
     layout_1 = [  
-    [sg.Text('ファイル', size=(10, 1)), sg.Input(), sg.FileBrowse('ファイルを選択', key='inputFilePath')], 
-    # [sg.Text('ここは2行目：適当に文字を入力してください'), sg.InputText()],
-    [sg.Button('開始', key='startButton'), sg.Button('停止', key='stopButton'), sg.Button('アプリ終了', key='exitButton')], 
-    [sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))],  
-    [sg.Text('', key='analysisStatus')], 
-    [
-       sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER A-'),
-       sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER B-')],
+        [sg.Text('ファイル', size=(10, 1)), sg.Input(), sg.FileBrowse('ファイルを選択', key='inputFilePath')], 
+        [sg.Button('開始', key='startButton'), sg.Button('停止', key='stopButton'), sg.Button('アプリ終了', key='exitButton')], 
+        [sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 13))],  
+        [sg.Text('', key='analysisStatus')], 
+        [
+        sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER A-'),
+        sg.Slider((0, 255), 128, 1, orientation='h', size=(20, 15), key='-CANNY SLIDER B-')],
     ]
 
     layout_2 = [
-        
         [sg.Image(filename='', key='previewImage')]
     ]
 
     layout_3 = [
-        
         [sg.Output(size=(80,20))]
     ]
 
@@ -43,7 +39,7 @@ def main2():
     ]
                 
     # ウィンドウの生成
-    window = sg.Window('サンプルプログラム', layout)
+    window = sg.Window('POP1 Kill Extractor', layout)
 
 
     cap = cv2.VideoCapture('../videos/test_1.mp4')
@@ -52,22 +48,18 @@ def main2():
 
 
     while True:
-        #window.read(timeout=0) timeout 秒数。0だとスムーズ、数字が多いとカクカク。
+        # timeout: 小さいほど滑らか
         event, values = window.read(timeout=100)
-        #Exitボタンが押されたら、またはウィンドウの閉じるボタンが押されたら終了
+        
         if event == 'exitButton' or event == sg.WIN_CLOSED:
             break
 
-        #read()メソッドの返り値は、フレームの画像が読み込めたかどうかを示すbool値と、画像の配列ndarrayのタプル。
         ret, frame = cap.read()
 
         if not ret:
             continue
 
-        
         current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
-
-        
 
         frame = main.proc(frame, current_sec=current_sec)
         frame = cv2.resize(frame, dsize=None, fx=0.2, fy=0.2)
@@ -85,4 +77,4 @@ def main2():
 
 
 if __name__ == '__main__':
-    main2()
+    draw()
