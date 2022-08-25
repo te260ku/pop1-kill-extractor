@@ -1,7 +1,7 @@
-from os import kill
 import cv2
 import numpy as np
 import pyperclip
+import csv
 
 
 """ 青 """
@@ -17,6 +17,8 @@ detection_count = 0
 detection_continuation_time = 0
 detected = False
 kill_time = []
+kill_time.append(1.1)
+kill_time.append(2.2)
 
 frame_count = 0
 max_frame_count = 10
@@ -31,6 +33,13 @@ def nothing(x):
 def copy_kill_time():
     kill_time_str = ",".join(map(str, kill_time))
     pyperclip.copy(kill_time_str)
+
+
+def save_kill_time(file_name):
+    path = '../csv/' + file_name + '.csv'
+    with open(path, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(kill_time)
 
 
 def proc(img, current_sec=0):
