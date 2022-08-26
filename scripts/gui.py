@@ -1,3 +1,4 @@
+from turtle import color
 import PySimpleGUI as sg
 import cv2
 import main
@@ -20,19 +21,24 @@ def draw():
     stop_button_comp = sg.Button('停止', key='stopButton', font=(gui_font, 14))
     exit_button_comp = sg.Button('アプリ終了', key='exitButton', font=(gui_font, 14))
     preview_checkbox_comp = sg.Checkbox('プレビュー表示', False, key='previewCheckbox', font=(gui_font, 14))
-    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14), expand_x=True, background_color='#37B507')
+    processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14), expand_x=True, background_color='#87cefa', text_color='black')
 
     preview_image_comp = sg.Image(filename='../images/initial_image.png', key='previewImage')
 
-    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14), text_color='#000', background_color='#37B507', size=(10,1))
-    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14), text_color='#000', background_color='#37B507', size=(10, 1))
+
+    kill_count_text_label_comp = sg.Text('キル数', font=(gui_font, 14), text_color='black', background_color='#c0c0c0', size=(7,1), pad=((5,0), (5,0)))
+    kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14), text_color='white', background_color='#808080', size=(10,1), expand_x=True, pad=((0,5), (5,0)))
+    
+    fps_text_label_comp = sg.Text('FPS', font=(gui_font, 14), text_color='black', background_color='#c0c0c0', size=(7, 1), pad=((5,0), (1,5)))
+    fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14), text_color='white', background_color='#808080', size=(10, 1), expand_x=True, pad=((0,5), (1,5)))
+
 
     kill_time_log_comp = sg.Output(size=(28,15))
     copy_button_comp = sg.Button('コピー', key='copyButton', font=(gui_font, 14))
     save_button_comp = sg.Button('保存', key='saveButton', font=(gui_font, 14))
 
     progress_text_comp = sg.Text('0%', key='progressText', font=(gui_font, 14), size=(5,1))
-    progress_bar_comp = sg.ProgressBar(100, orientation='h', size=(36.5,20), key='progressBar')
+    progress_bar_comp = sg.ProgressBar(100, orientation='h', size=(36.5,25), key='progressBar')
 
 
     layout_1 = [  
@@ -48,8 +54,8 @@ def draw():
     ]
 
     layout_3 = [
-        [kill_count_text_comp], 
-        [fps_text_comp], 
+        [kill_count_text_label_comp, kill_count_text_comp], 
+        [fps_text_label_comp, fps_text_comp], 
         [kill_time_log_comp],  
         [copy_button_comp, save_button_comp]
     ]
@@ -75,16 +81,14 @@ def draw():
         event, values = window.read(timeout=100)
 
         
-        
         if event == 'exitButton' or event == sg.WIN_CLOSED:
             break
 
         if event == 'startButton':
             if (processing == False):
-                # cap = cv2.VideoCapture('../videos/test_1.mp4')
-
                 file_path = values['inputFilePath']
                 if (file_path == ''):
+                    sg.popup('ファイルを選択してください', title='Error')
                     continue
                 mime = mimetypes.guess_type(file_path)
                 if (mime[0].startswith('video/')):
@@ -92,14 +96,16 @@ def draw():
                     if (cap.isOpened() == False):
                         continue
                     window['processingStatusText'].update('Processing...')
+                    window["processingStatusText"].update(background_color='#cd5c5c')
+                    window["processingStatusText"].update(text_color='white')
                     processing = True
                 else:
                     sg.popup('ファイル形式が無効です', title='Error')
-
-                
         elif event == 'stopButton':
-            processing = False
             window['processingStatusText'].update('Waiting...')
+            window["processingStatusText"].update(background_color='#87cefa')
+            window["processingStatusText"].update(text_color='white')
+            processing = False
         elif event == 'copyButton':
             main.copy_kill_time()
         elif event == 'saveButton':
@@ -132,10 +138,10 @@ def draw():
                 window['previewImage'].update(data=bytes)
 
 
-        kill_count_text = 'キル数: {}'.format(main.detection_count)
+        kill_count_text = '{}'.format(main.detection_count)
         window['killCountText'].update(kill_count_text)
 
-        fps_text = 'FPS: {:.2f}'.format(main.fps)
+        fps_text = '{:.2f}'.format(main.fps)
         window['fpsText'].update(fps_text)
         
 
