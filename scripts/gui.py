@@ -10,6 +10,7 @@ gui_font = 'Meiryo UI'
 
 def draw():
     processing = False
+    select_valid_file = False
 
     '''************************************************************
     ** レイアウトの定義
@@ -96,6 +97,7 @@ def draw():
                 file_path = values['inputFilePath']
                 if (file_path == ''):   # パスが空ならエラー
                     sg.popup('ファイルを選択してください', title='Error')
+                    select_valid_file = False
                     continue
                 mime = mimetypes.guess_type(file_path)
                 if (mime[0].startswith('video/')):  # ファイル形式が動画の場合は処理を進める
@@ -106,8 +108,10 @@ def draw():
                     window["processingStatusText"].update(background_color='#cd5c5c')
                     window["processingStatusText"].update(text_color='white')
                     processing = True
+                    select_valid_file = True
                 else:
                     sg.popup('ファイル形式が無効です', title='Error')
+                    select_valid_file = False
 
         elif event == 'stopButton':
             window['processingStatusText'].update('Waiting...')
@@ -115,8 +119,11 @@ def draw():
             window["processingStatusText"].update(text_color='black')
             processing = False
 
-        # elif event == 'createButton':
-            # main.create_clip('../videos/test_full.mp4', '../videos/out.mp4', [[1, 3], [5, 7]])
+        elif event == 'createButton':
+            if (select_valid_file):
+                value = sg.popup_get_file('', save_as=True, title='保存先を選択')
+                out = value + '.mp4'
+                main.create_clip(file_path, out, [[1, 3], [5, 7]])
 
         elif event == 'copyButton':
             main.copy_kill_time()
