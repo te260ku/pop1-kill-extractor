@@ -22,6 +22,7 @@ def draw():
     file_select_button_comp = sg.FileBrowse('ファイルを選択', key='inputFilePath', font=(gui_font, 14))
     start_button_comp = sg.Button('開始', key='startButton', font=(gui_font, 14))
     stop_button_comp = sg.Button('停止', key='stopButton', font=(gui_font, 14))
+    create_button_comp = sg.Button('切り出し', key='createButton', font=(gui_font, 14))
     exit_button_comp = sg.Button('アプリ終了', key='exitButton', font=(gui_font, 14))
     preview_checkbox_comp = sg.Checkbox('プレビュー表示', True, key='previewCheckbox', font=(gui_font, 14))
     processing_status_text_comp = sg.Text('Waiting...', key='processingStatusText', font=(gui_font, 14), expand_x=True, background_color='#87cefa', text_color='black', justification='center')
@@ -36,14 +37,14 @@ def draw():
     kill_count_text_comp = sg.Text('', key='killCountText', font=(gui_font, 14), text_color='white', background_color='#808080', size=(10,1), expand_x=True, pad=((0,5), (5,0)))
     fps_text_label_comp = sg.Text('FPS', font=(gui_font, 14), text_color='black', background_color='#c0c0c0', size=(7, 1), pad=((5,0), (1,5)))
     fps_text_comp = sg.Text('', key='fpsText', font=(gui_font, 14), text_color='white', background_color='#808080', size=(10, 1), expand_x=True, pad=((0,5), (1,5)))
-    kill_time_log_comp = sg.Output(size=(28,15))
+    kill_time_log_comp = sg.Multiline(size=(28,15), key='killTimeLog', disabled=True)
     copy_button_comp = sg.Button('コピー', key='copyButton', font=(gui_font, 14))
     save_button_comp = sg.Button('保存', key='saveButton', font=(gui_font, 14))
 
     layout_1 = [  
         [sg.Text('ファイル', font=(gui_font, 14)), sg.Input(font=(gui_font, 14)), file_select_button_comp], 
         [preview_checkbox_comp],  
-        [start_button_comp, stop_button_comp, exit_button_comp], 
+        [start_button_comp, stop_button_comp, create_button_comp, exit_button_comp], 
         [processing_status_text_comp], 
     ]
 
@@ -73,6 +74,8 @@ def draw():
 
     # FPS計測用のタイマーを開始する
     main.start_proc()
+
+    cap = None
 
 
     while True:
@@ -111,6 +114,9 @@ def draw():
             window["processingStatusText"].update(background_color='#87cefa')
             window["processingStatusText"].update(text_color='black')
             processing = False
+
+        # elif event == 'createButton':
+            # main.create_clip('../videos/test_full.mp4', '../videos/out.mp4', [[1, 3], [5, 7]])
 
         elif event == 'copyButton':
             main.copy_kill_time()
@@ -155,8 +161,9 @@ def draw():
         window['killCountText'].update(kill_count_text)
         fps_text = '{:.2f}'.format(main.fps)
         window['fpsText'].update(fps_text)
-        
-    cap.release()
+    
+    if (not cap is None):
+        cap.release()
     window.close()
 
 
