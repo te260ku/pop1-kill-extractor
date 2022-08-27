@@ -73,8 +73,7 @@ def proc(img, current_sec=0):
     # 中央値フィルタ
     img_median = cv2.medianBlur(img_mask, 5)
     # 輪郭抽出
-    contours, _ = cv2.findContours(
-    img_median, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(img_median, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for cnt in contours:
         # 輪郭内の領域の面積を計算
@@ -89,7 +88,7 @@ def proc(img, current_sec=0):
             """ キルログ内部の領域の二値化画像に膨張処理をかけて枠線を含むマスク画像を生成する """
             img_inner_mask = np.zeros_like(img)   # 内部の二値化画像
             cv2.drawContours(img_inner_mask, [cnt], -1, (255, 255, 255), thickness=-1)
-            kernel = np.ones((12,12),np.uint8)
+            kernel = np.ones((24,24),np.uint8)
             img_dilation = cv2.dilate(img_inner_mask, kernel, iterations=1)   # 内部の二値化膨張画像
             img_inner_color = cv2.bitwise_and(img, img_inner_mask)  # 内部のカラー画像
             img_inner_color_dilation = cv2.bitwise_and(img, img_dilation)   # 内部のカラー膨張画像
@@ -121,17 +120,17 @@ def proc(img, current_sec=0):
             print(white_area_trans)
 
             # 検出された白い枠線の面積が指定した範囲内だった場合、キルログとして判定
-            if (1200 < white_area_trans):
+            if (700 < white_area_trans):
             # if (400 < white_area < 500):
                 # 背景によってはインフォーメーションログを誤検出する場合がある
 
                 # 輪郭とテキストを描画する
-                cv2.drawContours(result, [approx], -1, (255, 0, 0), 3)
+                cv2.drawContours(result, [approx], -1, (255, 0, 0), 8)
                 position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
                 px, py = position
                 cv2.putText(result, 'rec', (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
 
-                cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
+                # cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
 
                 # print('inner area: {}'.format(area))
                 # print('border area: {}'.format(white_area))
@@ -151,10 +150,12 @@ def proc(img, current_sec=0):
             detected = False
     
     # 画像中に情報を表示
-    cv2.putText(result, 'KILL: ' + str(detection_count), (10, 80), font, 1.0, (0, 255, 0), 2)
-    cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
+    # cv2.putText(result, 'KILL: ' + str(detection_count), (10, 80), font, 1.0, (0, 255, 0), 2)
+    # cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
 
     # cv2.imshow('image', result)
+
+    # cv2.imwrite('../article/images/img_inner_color_dilation.png', img_inner_color_dilation)
 
     return result
 
@@ -187,7 +188,7 @@ def start_proc():
 
 
 def main():
-    img = cv2.imread('../images/test_1.png')
+    img = cv2.imread('../images/test_4.png')
     cap = cv2.VideoCapture('../videos/test_2.mp4')
 
     # ウィンドウの調整
@@ -201,12 +202,12 @@ def main():
     '''************************************************************
     ** 画像
     ************************************************************'''
-    # proc_img(img)
+    proc_img(img)
 
     '''************************************************************
     ** 動画
     ************************************************************'''
-    proc_video(cap)
+    # proc_video(cap)
 
     cv2.destroyAllWindows()
 
