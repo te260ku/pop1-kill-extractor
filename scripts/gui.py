@@ -125,7 +125,9 @@ def draw():
                 if (value == None or value == ''):
                     continue
                 out = value + '.mp4'
-                main.create_clip(file_path, out)
+                result = main.create_clip(file_path, out)
+                if (not result):
+                    sg.popup('キルシーンが未検出です', title='Error')    
             else:
                 sg.popup('ファイルを選択して解析してください', title='Error')
 
@@ -161,9 +163,12 @@ def draw():
             window['progressText'].update('{}%'.format(str(progress_value)))
             
             # 解析用の関数にフレームを渡す
-            frame = main.proc(frame, current_sec=current_sec)
+            frame, estimated_kill_time = main.proc(frame, current_sec=current_sec)
             # プレビュー表示用に縮小
             frame = cv2.resize(frame, dsize=None, fx=0.2, fy=0.2)
+
+            if not estimated_kill_time == None:
+                window['killTimeLog'].update('Estimated Kill Time: {}'.format(estimated_kill_time + '\n'), append=True)
             
             if values['previewCheckbox']:
                 bytes = cv2.imencode('.png', frame)[1].tobytes()
