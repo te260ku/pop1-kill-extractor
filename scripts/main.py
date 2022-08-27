@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pyperclip
 import csv
+from moviepy.editor import *
 
 
 """ 青 """
@@ -187,6 +188,22 @@ def start_proc():
     tm.start()
 
 
+def create_clip(input_path, output_path, time_list):
+    if (len(time_list) == 0):
+        return
+    raw_clip = VideoFileClip(input_path)
+    clips = []
+    for t in time_list:
+        if (not t[0] < t[1]):
+            continue
+        if (not t[1] < raw_clip.duration):
+            continue
+        clip = raw_clip.subclip(t[0], t[1])
+        clips.append(clip)
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_videofile(output_path)
+
+
 def main():
     img = cv2.imread('../images/test_4.png')
     cap = cv2.VideoCapture('../videos/test_2.mp4')
@@ -212,5 +229,5 @@ def main():
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
