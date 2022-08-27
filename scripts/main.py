@@ -1,3 +1,5 @@
+from curses import raw
+from os import kill
 import cv2
 import numpy as np
 import pyperclip
@@ -18,8 +20,6 @@ detection_count = 0
 detection_continuation_time = 0
 detected = False
 kill_time = []
-kill_time.append(1.1)
-kill_time.append(2.2)
 
 frame_count = 0
 max_frame_count = 10
@@ -118,7 +118,7 @@ def proc(img, current_sec=0):
             # マスク画像中のキルログの枠線の面積を計算
             white_area_trans = cv2.countNonZero(img_mask_trans)
 
-            print(white_area_trans)
+            # print(white_area_trans)
 
             # 検出された白い枠線の面積が指定した範囲内だった場合、キルログとして判定
             if (700 < white_area_trans):
@@ -188,18 +188,25 @@ def start_proc():
     tm.start()
 
 
-def create_clip(input_path, output_path, time_list):
-    if (len(time_list) == 0):
+def create_clip(input_path, output_path):
+    if (len(kill_time) == 0):
         return
+
     raw_clip = VideoFileClip(input_path)
+    duration = raw_clip.duration
     clips = []
-    for t in time_list:
-        if (not t[0] < t[1]):
-            continue
-        if (not t[1] < raw_clip.duration):
-            continue
-        clip = raw_clip.subclip(t[0], t[1])
+
+    for kt in kill_time:
+        val = int(float(kt))
+        start = val - 2
+        end = val + 3
+        if (start < 0):
+            start = 0
+        if (end > duration):
+            end = duration
+        clip = raw_clip.subclip(start, end)
         clips.append(clip)
+    
     final_clip = concatenate_videoclips(clips)
     final_clip.write_videofile(
         output_path,  
