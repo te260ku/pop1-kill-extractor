@@ -201,7 +201,13 @@ def create_clip(input_path, output_path, time_list):
         clip = raw_clip.subclip(t[0], t[1])
         clips.append(clip)
     final_clip = concatenate_videoclips(clips)
-    final_clip.write_videofile(output_path)
+    final_clip.write_videofile(
+        output_path,  
+        codec='libx264', 
+        audio_codec='aac', 
+        temp_audiofile='temp-audio.m4a', 
+        remove_temp=True
+    )
 
 
 def main():
