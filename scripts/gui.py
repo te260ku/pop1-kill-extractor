@@ -147,6 +147,10 @@ def draw():
                 # 動画が終了していたらプログレスバーを満タンにする
                 window['progressBar'].update(100)
                 window['progressText'].update('100%')
+                window['processingStatusText'].update('Waiting...')
+                window["processingStatusText"].update(background_color='#87cefa')
+                window["processingStatusText"].update(text_color='black')
+                processing = False
                 continue
 
             current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
