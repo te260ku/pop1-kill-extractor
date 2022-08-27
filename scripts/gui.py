@@ -122,8 +122,12 @@ def draw():
         elif event == 'createButton':
             if (select_valid_file):
                 value = sg.popup_get_file('', save_as=True, title='保存先を選択')
+                if (value == None or value == ''):
+                    continue
                 out = value + '.mp4'
-                main.create_clip(file_path, out, [[1, 3], [5, 7]])
+                main.create_clip(file_path, out)
+            else:
+                sg.popup('ファイルを選択して解析してください', title='Error')
 
         elif event == 'copyButton':
             main.copy_kill_time()
@@ -141,7 +145,8 @@ def draw():
             ret, frame = cap.read()
             if not ret:
                 # 動画が終了していたらプログレスバーを満タンにする
-                window['progressBar'].update(1)
+                window['progressBar'].update(100)
+                window['progressText'].update('100%')
                 continue
 
             current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
