@@ -3,6 +3,7 @@ import numpy as np
 import pyperclip
 import csv
 from moviepy.editor import *
+import proc_util
 
 
 """ 青 """
@@ -60,9 +61,6 @@ def proc(img, current_sec=0):
         tm.reset()
         tm.start()
 
-    # if (frame_count % 2 == 0):
-    #     return
-
     result = img.copy()
 
     '''************************************************************
@@ -105,39 +103,11 @@ def proc(img, current_sec=0):
                 # マスク画像中のキルログの枠線の面積を計算
                 white_area = cv2.countNonZero(img_mask_border)
 
-                # return (img_inner_color_dilation, estimated_kill_time)
-
-
                 # 射影変換
-                # p_original = np.float32(approx)
-                # min_x = 10
-                # min_y = 10
-                # w = 800
-                # h = 100
-                # p_trans = np.float32([[min_x,min_y+h], [min_x+w,min_y+h], [min_x+w,min_y], [min_x,min_y]])
-                # rows, cols, _ = result.shape
-                # M = cv2.getPerspectiveTransform(p_original, p_trans)
-                # img_trans = cv2.warpPerspective(img_inner_color_dilation, M, (cols, rows))
-                # # HSV変換
-                # img_hsv_trans = cv2.cvtColor(img_trans, cv2.COLOR_BGR2HSV_FULL)
-                # # マスク画像を生成
-                # img_mask_trans = cv2.inRange(img_hsv_trans, lower_border, upper_border)
-                # # マスク画像中のキルログの枠線の面積を計算
-                # white_area_trans = cv2.countNonZero(img_mask_trans)
-
-
-                # cv2.drawContours(result, [approx], -1, (255, 0, 0), 8)
-                # print('inner area: {}'.format(inner_area))
-                # print('border area: {}'.format(white_area))
-
-                # cv2.imwrite('../tmp/' + str(frame_count) + '.png', img_inner_color_dilation)
-
+                # img_mask_trans = proc_util.perspective_transform(img_inner_color_dilation, approx, [[10, 800], [10, 100]], [lower_inner, upper_inner])
 
                 # 検出された白い枠線の面積が指定した範囲内だった場合、キルログとして判定
-                # if (1200 < white_area_trans):
-                # if (400 < white_area < 500):
                 if (3500 < white_area):
-                    # 背景によってはインフォーメーションログを誤検出する場合がある
 
                     # 輪郭とテキストを描画する
                     cv2.drawContours(result, [approx], -1, (255, 0, 0), 8)
