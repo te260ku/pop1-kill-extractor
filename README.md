@@ -1,6 +1,6 @@
 # POP1 Kill Extractor
 
-VRゲーム「[POPULATION: ONE](https://www.populationonevr.com/)」のプレイ映像から、自動的にキルシーンを抽出してキル集を作成するプログラムです。
+VRゲーム「[POPULATION: ONE](https://www.populationonevr.com/)」のプレイ映像から、自動的にキルシーンを抽出してキル集を作成するプログラムです。画像認識を使って動画中のキルログを検出します。
 
 ## アプリ画面
 
