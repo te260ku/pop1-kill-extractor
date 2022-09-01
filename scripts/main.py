@@ -1,5 +1,3 @@
-from curses import raw
-from os import kill
 import cv2
 import numpy as np
 import pyperclip
@@ -8,11 +6,11 @@ from moviepy.editor import *
 
 
 """ 青 """
-lower_inner = np.array([143, 93, 33])
-upper_inner = np.array([160, 136, 65])
+lower_inner = np.array([140, 61, 38])
+upper_inner = np.array([163, 136, 65])
 """ 白 """
-lower_border = np.array([0,0,210])
-upper_border = np.array([169,21,233])
+lower_border = np.array([0,0,128])
+upper_border = np.array([192,26,255])
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -20,6 +18,8 @@ detection_count = 0
 detection_continuation_time = 0
 detected = False
 kill_time = []
+kill_time_start_offset = 6
+kill_time_end_offset = 3
 
 frame_count = 0
 max_frame_count = 10
@@ -49,6 +49,7 @@ def proc(img, current_sec=0):
     global detected
     global frame_count
     global fps
+    estimated_kill_time = None
 
     frame_count += 1
 
@@ -81,15 +82,17 @@ def proc(img, current_sec=0):
         inner_area = cv2.contourArea(cnt)
         # 輪郭を近似して頂点数を計算
         arclen = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, arclen * 0.01, True)
+        approx = cv2.approxPolyDP(cnt, arclen * 0.02, True)
         n_gon = len(approx)
+
         
         # 輪郭が四角形かつ指定した値よりも大きい面積かどうかを判定
-        if (n_gon == 4 and inner_area > 30000):
+        if (n_gon == 4 and 30000 < inner_area < 40000):
+        # if (30000 < inner_area):
             """ キルログ内部の領域の二値化画像に膨張処理をかけて枠線を含むマスク画像を生成する """
             img_inner_mask = np.zeros_like(img)   # 内部の二値化画像
             cv2.drawContours(img_inner_mask, [cnt], -1, (255, 255, 255), thickness=-1)
-            kernel = np.ones((24,24),np.uint8)
+            kernel = np.ones((12,12),np.uint8)
             img_dilation = cv2.dilate(img_inner_mask, kernel, iterations=1)   # 内部の二値化膨張画像
             img_inner_color = cv2.bitwise_and(img, img_inner_mask)  # 内部のカラー画像
             img_inner_color_dilation = cv2.bitwise_and(img, img_dilation)   # 内部のカラー膨張画像
@@ -101,39 +104,49 @@ def proc(img, current_sec=0):
             # マスク画像中のキルログの枠線の面積を計算
             white_area = cv2.countNonZero(img_mask_border)
 
-            # 射影変換
-            p_original = np.float32(approx)
-            min_x = 10
-            min_y = 10
-            w = 800
-            h = 100
-            p_trans = np.float32([[min_x,min_y+h], [min_x+w,min_y+h], [min_x+w,min_y], [min_x,min_y]])
-            rows, cols, _ = result.shape
-            M = cv2.getPerspectiveTransform(p_original, p_trans)
-            img_trans = cv2.warpPerspective(img_inner_color_dilation, M, (cols, rows))
-            # HSV変換
-            img_hsv_trans = cv2.cvtColor(img_trans, cv2.COLOR_BGR2HSV_FULL)
-            # マスク画像を生成
-            img_mask_trans = cv2.inRange(img_hsv_trans, lower_border, upper_border)
-            # マスク画像中のキルログの枠線の面積を計算
-            white_area_trans = cv2.countNonZero(img_mask_trans)
+            # return (img_inner_color_dilation, estimated_kill_time)
 
-            # print(white_area_trans)
+
+            # 射影変換
+            # p_original = np.float32(approx)
+            # min_x = 10
+            # min_y = 10
+            # w = 800
+            # h = 100
+            # p_trans = np.float32([[min_x,min_y+h], [min_x+w,min_y+h], [min_x+w,min_y], [min_x,min_y]])
+            # rows, cols, _ = result.shape
+            # M = cv2.getPerspectiveTransform(p_original, p_trans)
+            # img_trans = cv2.warpPerspective(img_inner_color_dilation, M, (cols, rows))
+            # # HSV変換
+            # img_hsv_trans = cv2.cvtColor(img_trans, cv2.COLOR_BGR2HSV_FULL)
+            # # マスク画像を生成
+            # img_mask_trans = cv2.inRange(img_hsv_trans, lower_border, upper_border)
+            # # マスク画像中のキルログの枠線の面積を計算
+            # white_area_trans = cv2.countNonZero(img_mask_trans)
+
+
+            # cv2.drawContours(result, [approx], -1, (255, 0, 0), 8)
+            # print('inner area: {}'.format(inner_area))
+            # print('border area: {}'.format(white_area))
+
+            # cv2.imwrite('../tmp/' + str(frame_count) + '.png', img_inner_color_dilation)
+
 
             # 検出された白い枠線の面積が指定した範囲内だった場合、キルログとして判定
-            if (700 < white_area_trans):
+            # if (1200 < white_area_trans):
             # if (400 < white_area < 500):
+            if (3500 < white_area):
                 # 背景によってはインフォーメーションログを誤検出する場合がある
 
                 # 輪郭とテキストを描画する
                 cv2.drawContours(result, [approx], -1, (255, 0, 0), 8)
-                position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
-                px, py = position
-                cv2.putText(result, 'rec', (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+                # position = np.asarray(approx).reshape((-1, 2)).max(axis=0).astype('int32')
+                # px, py = position
+                # cv2.putText(result, 'rec', (px + 10, py + 10), font, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
 
-                # cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
+                cv2.putText(result, 'Detected', (10, 130), font, 1.0, (0, 255, 0), 2)
 
-                # print('inner area: {}'.format(area))
+                # print('inner area: {}'.format(inner_area))
                 # print('border area: {}'.format(white_area))
 
                 if (detected == False):
@@ -142,6 +155,9 @@ def proc(img, current_sec=0):
                     estimated_kill_time = '{{:.{:d}f}}'.format(2).format(current_sec/1000)
                     kill_time.append(estimated_kill_time)
                     print('Estimated Kill Time: {}'.format(estimated_kill_time))
+                    cv2.putText(result, str(inner_area), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
+                    cv2.putText(result, str(white_area), (10, 80), font, 1.0, (0, 255, 0), 2)
+                    cv2.imwrite('../tmp/' + str(frame_count) + '.png', result)
 
     """ 検出の重複を防ぐための処理 """
     if (detected):
@@ -158,11 +174,12 @@ def proc(img, current_sec=0):
 
     # cv2.imwrite('../article/images/img_inner_color_dilation.png', img_inner_color_dilation)
 
-    return result
+    return (result, estimated_kill_time)
+    # return (img_inner_color_dilation, estimated_kill_time)
 
     
 def proc_img(img):
-    tmp = proc(img)
+    tmp, _ = proc(img)
     cv2.imshow('image', tmp)
     cv2.waitKey(0)
 
@@ -176,7 +193,7 @@ def proc_video(cap):
         if not ret:
             break
         current_sec = cap.get(cv2.CAP_PROP_POS_MSEC)
-        tmp = proc(frame, current_sec=current_sec)
+        tmp, _ = proc(frame, current_sec=current_sec)
         cv2.imshow('image', tmp)
         # qキーが押されたら途中終了
         if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -190,7 +207,7 @@ def start_proc():
 
 def create_clip(input_path, output_path):
     if (len(kill_time) == 0):
-        return
+        return False
 
     raw_clip = VideoFileClip(input_path)
     duration = raw_clip.duration
@@ -198,8 +215,8 @@ def create_clip(input_path, output_path):
 
     for kt in kill_time:
         val = int(float(kt))
-        start = val - 2
-        end = val + 3
+        start = val - kill_time_start_offset
+        end = val + kill_time_end_offset
         if (start < 0):
             start = 0
         if (end > duration):
@@ -216,10 +233,12 @@ def create_clip(input_path, output_path):
         remove_temp=True
     )
 
+    return True
+
 
 def main():
-    img = cv2.imread('../images/test_4.png')
-    cap = cv2.VideoCapture('../videos/test_2.mp4')
+    img = cv2.imread('../images/test_7.png')
+    cap = cv2.VideoCapture('../videos/test_short_1.mp4')
 
     # ウィンドウの調整
     if (cap.isOpened()):
@@ -232,15 +251,15 @@ def main():
     '''************************************************************
     ** 画像
     ************************************************************'''
-    proc_img(img)
+    # proc_img(img)
 
     '''************************************************************
     ** 動画
     ************************************************************'''
-    # proc_video(cap)
+    proc_video(cap)
 
     cv2.destroyAllWindows()
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
