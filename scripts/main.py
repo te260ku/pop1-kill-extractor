@@ -126,9 +126,6 @@ def proc(img, current_sec=0):
                         estimated_kill_time = '{{:.{:d}f}}'.format(2).format(current_sec/1000)
                         kill_time.append(estimated_kill_time)
                         print('Estimated Kill Time: {}'.format(estimated_kill_time))
-                        cv2.putText(result, str(inner_area), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
-                        cv2.putText(result, str(white_area), (10, 80), font, 1.0, (0, 255, 0), 2)
-                        cv2.imwrite('../tmp/' + str(frame_count) + '.png', result)
 
     """ 検出の重複を防ぐための処理 """
     if (detected):
@@ -140,13 +137,8 @@ def proc(img, current_sec=0):
     # 画像中に情報を表示
     # cv2.putText(result, 'KILL: ' + str(detection_count), (10, 80), font, 1.0, (0, 255, 0), 2)
     # cv2.putText(result, 'FPS: {:.2f}'.format(fps), (10, 30), font, 1.0, (0, 255, 0), thickness=2)
-
-    # cv2.imshow('image', result)
-
-    # cv2.imwrite('../article/images/img_inner_color_dilation.png', img_inner_color_dilation)
-
+    
     return (result, estimated_kill_time)
-    # return (img_inner_color_dilation, estimated_kill_time)
 
     
 def proc_img(img):
@@ -205,32 +197,3 @@ def create_clip(input_path, output_path):
     )
 
     return True
-
-
-def main():
-    img = cv2.imread('../images/test_7.png')
-    cap = cv2.VideoCapture('../videos/test_short_1.mp4')
-
-    # ウィンドウの調整
-    if (cap.isOpened()):
-        ret, frame = cap.read()
-        image_hight, image_width, _ = frame.shape
-        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('image', 1000, int(1000*image_hight/image_width)) 
-        cv2.moveWindow('image', 100, 200)
-
-    '''************************************************************
-    ** 画像
-    ************************************************************'''
-    # proc_img(img)
-
-    '''************************************************************
-    ** 動画
-    ************************************************************'''
-    proc_video(cap)
-
-    cv2.destroyAllWindows()
-
-
-if __name__ == '__main__':
-    main()
