@@ -7,6 +7,8 @@ VRゲーム「[POPULATION: ONE](https://www.populationonevr.com/)」のプレイ
 <img width="635" alt="スクリーンショット 2022-09-01 19 57 35" src="https://user-images.githubusercontent.com/34476697/187898312-d1ea485d-eb72-4bdf-8972-1d7e7e091cef.png">
 
 ## 出力映像
+実際にプログラムを使って自分のプレイ映像から自動生成したキル集です。自分が行ったのはBGMを入れる作業だけです。
+
 [![''](https://user-images.githubusercontent.com/34476697/187898730-a0e5bd7f-fb28-434e-8fa1-94b87ffe70a2.png)](https://youtu.be/KIDa9pQgZP4)
 
 ## 実行環境
