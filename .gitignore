@@ -135,3 +135,4 @@ dmypy.json
 videos/
 csv/
 article/
+tmp/
