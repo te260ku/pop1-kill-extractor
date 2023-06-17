@@ -8,6 +8,56 @@ def main(page):
 
     set_page(page)
 
+    settings_view = ft.Text("settings")
+    info_view = ft.Text("info")
+
+
+    def home_button_clicked(e):
+        page.remove(settings_view)
+        page.remove(info_view)
+        page.add(home_column)
+    def settings_button_clicked(e):
+        page.dialog = settings_dialog
+        settings_dialog.open = True
+        page.update()
+    def info_button_clicked(e):
+        page.remove(home_column)
+        page.remove(settings_view)
+        page.add(info_view)
+
+    appbar_items = [
+            ft.PopupMenuItem(text="Home", on_click=home_button_clicked),
+            ft.PopupMenuItem(),  # divider
+            ft.PopupMenuItem(text="Settings", on_click=settings_button_clicked), 
+            ft.PopupMenuItem(),  # divider
+            ft.PopupMenuItem(text="Info", on_click=info_button_clicked)
+        ]
+    
+
+    
+
+    
+
+
+    appbar = ft.AppBar(
+            leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
+            leading_width=100,
+            title=ft.Text("POP1 Kill Extractor",size=32, text_align="start"),
+            center_title=False,
+            toolbar_height=75,
+            bgcolor=ft.colors.LIGHT_BLUE_ACCENT_700,
+            actions=[
+                ft.Container(
+                    content=ft.PopupMenuButton(
+                        items=appbar_items
+                    ),
+                    margin=ft.margin.only(left=50, right=25), 
+                    
+                )
+            ],
+        )
+    page.appbar = appbar
+
 
     def button_clicked(e):
         page.add(ft.Text("Clicked!"))
@@ -66,12 +116,23 @@ def main(page):
     copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
     save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
 
+    def kill_time_offset_textbox_changed(e):
+         return e.control.value
+        
+
+    kill_time_offset_textbox = ft.TextField(
+        label="オフセット",
+        on_change=kill_time_offset_textbox_changed,
+    )
+
+
+
     
 
-    column = ft.Column(controls=[
+    home_column = ft.Column(controls=[
         
         ft.Row(controls=[ft.ElevatedButton(text='アプリ終了', on_click=app_close)]), 
-        ft.Row(controls=[start_button, stop_button, extract_button]), 
+        ft.Row(controls=[start_button, stop_button, extract_button, kill_time_offset_textbox]), 
         ft.Row(controls=[ft.TextField(ref=target_file, label="ファイル", disabled=True), select_file_button]), 
         ft.Row(controls=[processing_status_text]), 
         ft.Row(controls=[ft.Column([ft.Text("処理状況"), progress_bar])]), 
@@ -83,8 +144,35 @@ def main(page):
     
     processing_status.current.value = '待機中'
 
-    page.add(column)
+    page.add(home_column)
 
+
+
+
+
+
+
+
+    def close_settings_dialog(e):
+        settings_dialog.open = False
+        page.update()
+
+
+    user_name = ft.TextField(label="User name")
+    password = ft.TextField(label="Password")
+    settings_dialog = ft.AlertDialog(
+        title=ft.Text("Settings"),
+        content=ft.Column([
+            user_name,
+            password,
+            ft.ElevatedButton(text="Login", on_click=close_settings_dialog),
+        ], 
+        tight=True, 
+        width=500,
+        height=300,
+        ),
+    )
+    
     
 
     # for i in range(0, 101):
@@ -114,31 +202,10 @@ def set_page(page: ft.Page):
     # page.window_left = 100
     # page.window_top = 400
 
-    appbar_items = [
-            ft.PopupMenuItem(text="Main"),
-            ft.PopupMenuItem(),  # divider
-            ft.PopupMenuItem(text="Settings"), 
-            ft.PopupMenuItem(),  # divider
-            ft.PopupMenuItem(text="Info")
-        ]
 
-    appbar = ft.AppBar(
-            leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
-            leading_width=100,
-            title=ft.Text("POP1 Kill Extractor",size=32, text_align="start"),
-            center_title=False,
-            toolbar_height=75,
-            bgcolor=ft.colors.LIGHT_BLUE_ACCENT_700,
-            actions=[
-                ft.Container(
-                    content=ft.PopupMenuButton(
-                        items=appbar_items
-                    ),
-                    margin=ft.margin.only(left=50, right=25)
-                )
-            ],
-        )
-    page.appbar = appbar
+    
+
+    
     
 
     page.update()
