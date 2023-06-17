@@ -3,7 +3,7 @@ import numpy as np
 import pyperclip
 import csv
 from moviepy.editor import *
-import proc_util
+from . import proc_util
 
 
 """ 青 """
