@@ -69,7 +69,7 @@ def main(page):
     target_file = ft.Ref[ft.Text]()
     processing_status = ft.Ref[ft.Text]()
     
-    image_extensions = ["jpeg", "jpg", "png"]
+    image_extensions = ["mp4"]
     output_folder = ft.Ref[ft.Text]()
     # page.add(target_file)
     def on_file_picked(e: ft.FilePickerResultEvent):
