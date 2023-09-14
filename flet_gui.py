@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 import base64
 from scripts import main
+from scripts import detect_audio
 
 def main(page):
 
@@ -62,11 +63,35 @@ def main(page):
     def button_clicked(e):
         page.add(ft.Text("Clicked!"))
 
+    def start_button_clicked(e):
+        kill_time_log.controls.append(ft.Text("動画からキルシーンを検索しています"))
+        page.update()
+        # detect_audio.extract_kill_audio_time(video_file_name.current.value)
+
+    def stop_button_clicked(e):
+        kill_time_log.controls.append(ft.Text("処理を停止しました"))
+        page.update()
+        # detect_audio.extract_kill_audio_time(video_file_name.current.value)
+
+    def create_video_button_clicked(e):
+        kill_time_log.controls.append(ft.Text("動画を生成しています"))
+        page.update()
+        # detect_audio.create_video(video_file_name.current.value)
+
     def app_close(e):
         print('Closed App')
         page.window_destroy()
 
-    target_file = ft.Ref[ft.Text]()
+
+
+    def concat_detect_create_video_checkbox_changed(e):
+        detect_audio.concat_detect_create_video_checkbox = concat_detect_create_video_checkbox.value
+
+    concat_detect_create_video_checkbox = ft.Checkbox(label="検索と動画の生成を同時に実行", on_change=concat_detect_create_video_checkbox_changed)
+    concat_detect_create_video_checkbox.value = True
+
+
+    video_file_name = ft.Ref[ft.Text]()
     processing_status = ft.Ref[ft.Text]()
     
     image_extensions = ["mp4"]
@@ -74,14 +99,15 @@ def main(page):
     # page.add(target_file)
     def on_file_picked(e: ft.FilePickerResultEvent):
         if e.files:
-            target_file.current.value = e.files[0].path
+            video_file_name.current.value = e.files[0].path
             # output_folder.current.value = str(Path(target_file.current.value).parent)
             page.update()
+            print(video_file_name.current.value)
 
     file_picker = ft.FilePicker(on_result=on_file_picked)
     page.overlay.append(file_picker)
 
-    def show_file_picker(_: ft.ControlEvent):
+    def select_file_button_clicked(_: ft.ControlEvent):
         file_picker.pick_files(
             allow_multiple=False,
             file_type="custom",
@@ -89,10 +115,10 @@ def main(page):
         )
 
 
-    start_button = ft.ElevatedButton(text="開始", on_click=button_clicked)
-    stop_button = ft.ElevatedButton(text="停止", on_click=button_clicked)
-    extract_button = ft.ElevatedButton(text="出力", on_click=button_clicked)
-    select_file_button = ft.ElevatedButton("ファイルを選択", on_click=show_file_picker)
+    start_button = ft.ElevatedButton(text="開始", on_click=start_button_clicked)
+    stop_button = ft.ElevatedButton(text="停止", on_click=stop_button_clicked)
+    create_video_button = ft.ElevatedButton(text="出力", on_click=create_video_button_clicked)
+    select_file_button = ft.ElevatedButton("ファイルを選択", on_click=select_file_button_clicked)
     progress_bar = ft.ProgressBar(
         width=400, 
         color="pink", 
@@ -111,8 +137,8 @@ def main(page):
         scroll=ft.ScrollMode.ALWAYS,
         on_scroll_interval=0,
     )
-    for i in range(0, 50):
-        kill_time_log.controls.append(ft.Text(f"Text line {i}", key=str(i)))
+    # for i in range(0, 5):
+    #     kill_time_log.controls.append(ft.Text(f"Text line {i}", key=str(i)))
     copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
     save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
 
@@ -132,8 +158,8 @@ def main(page):
     home_column = ft.Column(controls=[
         
         ft.Row(controls=[ft.ElevatedButton(text='アプリ終了', on_click=app_close)]), 
-        ft.Row(controls=[start_button, stop_button, extract_button, kill_time_offset_textbox]), 
-        ft.Row(controls=[ft.TextField(ref=target_file, label="ファイル", disabled=True), select_file_button]), 
+        ft.Row(controls=[start_button, stop_button, create_video_button, kill_time_offset_textbox, concat_detect_create_video_checkbox]), 
+        ft.Row(controls=[ft.TextField(ref=video_file_name, label="ファイル", disabled=True), select_file_button]), 
         ft.Row(controls=[processing_status_text]), 
         ft.Row(controls=[ft.Column([ft.Text("処理状況"), progress_bar])]), 
         # ft.Row(controls=[preview_image]), 
