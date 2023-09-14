@@ -1,6 +1,7 @@
 import librosa
 import numpy as np
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+import time
 
 def cut_videoww(input_file, output_file, segments):
     clips = []
@@ -15,17 +16,19 @@ def cut_videoww(input_file, output_file, segments):
     final_clip.write_videofile(output_file, audio_codec='aac')
 
 
+input_video_file = '../videos/sample_1_trim.mp4'
+output_video_file = '../videos/output.mp4'
+kill_audio_file = '../audio/kill_audio_1.wav'
 
-# ターゲット効果音のファイル名
-target_audio_file = '../audio/kill_audio_1.wav'
+
+print("動画ファイルを読み込んでいます")
 # ターゲット効果音の読み込み
-target_sound, sr_target = librosa.load(target_audio_file, sr=None)
-# ゲーム音声のファイル名
-kill_audio_file = '../videos/sample_1_trim.mp4'
+target_sound, sr_target = librosa.load(kill_audio_file, sr=None)
 # ゲーム音声の読み込み
-game_audio, sr_game = librosa.load(kill_audio_file, sr=None)
+game_audio, sr_game = librosa.load(input_video_file, sr=None)
 
 
+print("効果音を探索しています")
 # クロスコレレーションを計算して、効果音の再生位置を見つける
 cross_correlations = np.correlate(game_audio, target_sound, mode='full')
 # クロスコレレーションのピークを検出
@@ -58,8 +61,7 @@ else:
 
 
 
-input_video_file = '../videos/sample_1_trim.mp4'
-output_video_file = '../videos/output.mp4'
+print("動画を切り出しています")
 segments = []
 for peak_time in trimmed_sorted_peak_times:
     segments.append((int(peak_time-3), int(peak_time+3)))
