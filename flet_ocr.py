@@ -13,47 +13,24 @@ import csv
 from moviepy.editor import *
 from tqdm import tqdm
 import asyncio
+import math
+import threading
 
-target_video_path = None
+target_video_path = ""
 
 
 
-def generate_image_panels(image_data):
-    images = ft.GridView(
-        height=100,
-        width=400,
-        child_aspect_ratio=1.0,
-        horizontal=True,
-    )
 
-    for i in range(0, 10):
-        images.controls.append(
-            ft.Container(
-                alignment=ft.alignment.center,
-                image_src_base64=image_data, 
-                # ink=True, 
-                on_click=lambda e: print("Clickable with Ink clicked!")
-            )
-        )
 
-    def button_clicked(e):
-        images.scroll_to(delta=50)
-    
-        
-    back_button = ft.IconButton(
-        icon=ft.icons.ARROW_BACK_IOS, on_click=button_clicked, data=0
-    )
-    forward_button = ft.IconButton(
-        icon=ft.icons.ARROW_FORWARD_IOS, on_click=button_clicked, data=0
-    )
-    r = ft.Row(controls=[images])
 
-    return r
 
 
 def main(page):
 
     set_page(page)
+
+
+
 
     settings_view = ft.Text("settings")
     info_view = ft.Text("info")
@@ -101,6 +78,12 @@ def main(page):
         )
     # page.appbar = appbar
 
+    progress_bar = ft.ProgressBar(
+        width=385, 
+        color="pink", 
+        bgcolor="#eeeeee"
+    )
+
 
     def button_clicked(e):
         page.add(ft.Text("Clicked!"))
@@ -112,6 +95,7 @@ def main(page):
     target_file = ft.Ref[ft.Text]()
     output_directory_path = ft.Ref[ft.Text]()
     processing_status = ft.Ref[ft.Text]()
+    progress_value = ft.Ref[ft.Text]()
     
     
     output_folder = ft.Ref[ft.Text]()
@@ -124,122 +108,130 @@ def main(page):
         initial_image_base64 = base64.b64encode(f.read()).decode('utf-8')
 
 
+
     '''************************************************************
     ** プレビューエリア
     ************************************************************'''
     preview_image = ft.Image(
         fit=ft.ImageFit.FIT_WIDTH, 
         # height=192/2,
-        # width=108*2, 
+        width=300, 
         src_base64 = initial_image_base64, 
+        repeat=ft.ImageRepeat.NO_REPEAT,
         )
     def play_preview_button_clicked(e):
         pass
     def stop_preview_button_clicked(e):
         pass
     play_preview_button = ft.IconButton(
-        icon=ft.icons.PLAY_CIRCLE, 
+        icon=ft.icons.DELETE, 
         on_click=play_preview_button_clicked
         )
     stop_preview_button = ft.IconButton(
         icon=ft.icons.STOP_CIRCLE, 
         on_click=stop_preview_button_clicked
         )
-    # preview_control_buttons = ft.Row(
-    #     controls=[play_preview_button, stop_preview_button], 
-    #     alignment=ft.MainAxisAlignment.CENTER
-    #     )
-    def items(count):
-        items = []
-        # for i in range(1, count + 1):
-        items.append(
-            ft.Container(
-                content=play_preview_button, 
-                alignment=ft.alignment.center,
-                width=50,
-                height=50,
-                # bgcolor=ft.colors.AMBER_500,
-            )
-        )
-        items.append(
-            ft.Container(
-                content=stop_preview_button, 
-                alignment=ft.alignment.center,
-                width=50,
-                height=50,
-                # bgcolor=ft.colors.AMBER_500,
-            )
-        )
-        items.append(
-            ft.Container(
-                content=play_preview_button, 
-                alignment=ft.alignment.center,
-                width=50,
-                height=50,
-                # bgcolor=ft.colors.AMBER_500,
-            )
-        )
-        return items
 
-    def row_with_alignment():
-        return ft.Column(
-            [
-                ft.Container(
-                    content=ft.Row(items(3), alignment=ft.MainAxisAlignment.CENTER),
-                ),
-            ]
-        )
-    preview_control_buttons = row_with_alignment()
     '''************************************************************
     ** 
     ************************************************************'''
 
 
 
+
+    alert_modal_text = ft.Text("")
+    def show_alert_modal():
+        page.dialog = alert_dialog
+        alert_dialog.open = True
+        page.update()
+    def close_alert_dialog(e):
+        alert_dialog.open = False
+        page.update()
+    alert_dialog = ft.AlertDialog(
+        modal=True,
+        content=alert_modal_text,
+        title=ft.Text("エラー"), 
+        actions=[
+            ft.TextButton("閉じる", on_click=close_alert_dialog),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        on_dismiss=lambda e: print("Modal dialog dismissed!"),
+    )
+
+    
+    def is_empty_str(val):
+        return len(val) == 0
+
+
+    '''************************************************************
+    ** スタート
+    ************************************************************'''
+    def set_p_value():
+        while ocr.finished is False:
+            progress_bar.value = ocr.progress_value
+            progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
+            page.update()
+            
+        progress_bar.value = 1.0
+        progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
+        page.update()
+        print("progress complete")
+        
     
 
 
     def start_button_clicked(e):
         global target_video_path
         print(target_video_path)
-        detected_kill_time = ocr.proc_new(target_video_path)
+        info_is_incomplete = False
+        alert_modal_text_value = ""
+        if (is_empty_str(ign_textbox.value)):
+            info_is_incomplete = True
+            alert_modal_text_value += "IGNを入力してください\n"
+        if (is_empty_str(target_video_path)):
+            info_is_incomplete = True
+            alert_modal_text_value += "動画を選択してください\n"
+        if (info_is_incomplete):
+            alert_modal_text.value = alert_modal_text_value
+            show_alert_modal()
+            return
+        print(ign_textbox.value)
+        
+
+        thread1 = threading.Thread(target=set_p_value)
+        thread1.start()
+
+        detected_kill_time = ocr.proc_new(video_path=target_video_path, ign=ign_textbox.value)
+
+        
         print(detected_kill_time)
         print("===Finish===")
+        show_preview_images()
 
-
-        # cap = cv2.VideoCapture(target_video_path)
-        # while True:
-        #     try:
-        #         # フレームの読み込み
-        #         ret, frame = cap.read()
-        #         # フレームが読み込めなくなったら終了
-        #         if not ret:
-        #             break
-                
-        #         _, encoded = cv2.imencode(".jpg", frame)
-        #         img_str = base64.b64encode(encoded).decode("ascii")
-
-        #         preview_image.src_base64 = img_str
-                
-        #         page.update()
-                
-        #     except KeyboardInterrupt:
-        #         break
-        # cap.release()
-        
-    def stop_button_clicked(e):
-        img = ocr.preview_thumbnails[0]
+    def convert_cv_to_base64(img):
         _, encoded = cv2.imencode(".jpg", img)
         img_str = base64.b64encode(encoded).decode("ascii")
-        panels[0].image_src_base64 = img_str
+        return img_str
+    
+    def stop_button_clicked(e):
+        ocr.finished = True
+        
+    def show_preview_images():
+        preview_thumbnails = ocr.preview_thumbnails
+        count = 0
+        for thumbnail in preview_thumbnails:
+            img_str = convert_cv_to_base64(thumbnail)
+            panels[count].src_base64 = img_str
+            count += 1
         page.update()
     
     def extract_button_clicked(e):
         pass
 
         
-
-    # 動画を指定するダイアログ
+    '''************************************************************
+    ** 動画を指定するダイアログ
+    ************************************************************'''
     image_extensions = ["mp4"]
     def on_file_picked(e: ft.FilePickerResultEvent):
         global target_video_path
@@ -282,20 +274,20 @@ def main(page):
 
     
 
-    start_button = ft.ElevatedButton(text="開始", on_click=start_button_clicked)
-    stop_button = ft.ElevatedButton(text="停止", on_click=stop_button_clicked)
-    extract_button = ft.ElevatedButton(text="出力", on_click=extract_button_clicked)
     
-    progress_bar = ft.ProgressBar(
-        width=385, 
-        color="pink", 
-        bgcolor="#eeeeee"
-    )
-    progress_bar.value = 0.5
-    # progress_value = float('{:.1f}'.format((main.frame_count/cap.get(cv2.CAP_PROP_FRAME_COUNT))*100))
+    
+    # progress_bar = ft.ProgressBar(
+    #     width=385, 
+    #     color="pink", 
+    #     bgcolor="#eeeeee"
+    # )
+    progress_bar.value = 0
+
 
 
     processing_status_text = ft.Text(ref=processing_status)
+
+    progress_value_text = ft.Text(ref=progress_value)
 
     
 
@@ -343,6 +335,8 @@ def main(page):
     ** 
     ************************************************************'''
 
+
+
     copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
     save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
 
@@ -376,62 +370,98 @@ def main(page):
     ************************************************************'''
     # image_panels = generate_image_panels(initial_image_base64)
     def on_image_panel_clicked(e):
-        print(e.control.data)
+        # print(e.control.data)
+        selected_preview_image_index = e.control.data
+        # print(ocr.detected_kill_times)
 
-        for p in panels:
-            if p.data == e.control.data:
+        for p in image_panels.controls:
+            if p.data == selected_preview_image_index:
                 p.border=ft.border.all(5, ft.colors.PINK_600)
+                # preview_image.src_base64 = convert_cv_to_base64(ocr.preview_thumbnails[selected_preview_image_index])
+                
+                
             else:
                 p.border=None
         page.update()
 
-    images = ft.GridView(
-        height=100,
-        width=400,
-        child_aspect_ratio=1.0,
-        horizontal=True,
+    image_panels = ft.Column(
+        height=140,
+        width=120,
+        # child_aspect_ratio=1.0,
+        # horizontal=True,
+        scroll=ft.ScrollMode.HIDDEN, 
+        alignment=ft.alignment.center, 
     )
 
     panels = []
     for i in range(0, 10):
         panels.append(
-            ft.Container(
-                alignment=ft.alignment.center,
-                image_src_base64=initial_image_base64, 
-                # ink=True, 
-                on_click=on_image_panel_clicked, 
-                data=i, 
-                
+            ft.Image(
+                # src=f"https://picsum.photos/150/150?{i}",
+                src_base64=initial_image_base64, 
+                # fit=ft.ImageFit.FIT_WIDTH,
+                # width=140, 
+                # repeat=ft.ImageRepeat.NO_REPEAT,
+                # border_radius=ft.border_radius.all(10),
             )
         )
 
-    for p in panels:
-        images.controls.append(p)
+    # for p in panels:
+    #     images.controls.append(p)
+
+
     
-    image_panels = ft.Row(controls=[images])
+    for i in range(0, 10):
+        c = ft.Container(
+            content=panels[i], 
+            on_click=on_image_panel_clicked, 
+            data=i, 
+            alignment=ft.alignment.center, 
+            # width=140,
+            # padding=ft.padding.symmetric(0, 20), 
+            # margin=ft.margin.symmetric(0, 20), 
+            )
+        image_panels.controls.append(c)
+    
+    # image_panels = ft.Row(controls=[images])
+
+
+    forward_preview_image_list_button = ft.IconButton(
+        icon=ft.icons.KEYBOARD_ARROW_UP, 
+        on_click=lambda _: image_panels.scroll_to(delta=-100, duration=500), 
+        )
+    back_preview_image_list_button = ft.IconButton(
+        icon=ft.icons.KEYBOARD_ARROW_DOWN, 
+        on_click=lambda _: image_panels.scroll_to(delta=100, duration=500), 
+        )
+    
+    image_panels_container = ft.Container(
+        content=image_panels, 
+        border=ft.border.all(1, ft.colors.WHITE), 
+        # padding=ft.padding.symmetric(0, 20),
+        margin=ft.margin.symmetric(0, 20),
+
+    )
     '''************************************************************
     ** 
     ************************************************************'''
+
+
+    
 
     
 
     app_close_button = ft.ElevatedButton(text='アプリ終了', on_click=app_close)
 
 
-
+    
     def on_copy_kill_time_button_clicked(e):
         page.dialog = copy_kill_time_dialog
         copy_kill_time_dialog.open = True
         page.update()
-    def on_save_kill_time_button_clicked(e):
-        page.dialog = save_kill_time_dialog
-        save_kill_time_dialog.open = True
-        page.update()
-
     def close_copy_kill_time_dialog(e):
         copy_kill_time_dialog.open = False
         page.update()
-
     copy_kill_time_dialog = ft.AlertDialog(
         modal=True,
         content=ft.Text("クリップボードにコピーしました"),
@@ -441,16 +471,16 @@ def main(page):
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e: print("Modal dialog dismissed!"),
     )
+    copy_kill_time_button = ft.ElevatedButton(text='コピー', on_click=on_copy_kill_time_button_clicked)
 
+    
     def on_save_kill_time_button_clicked(e):
         page.dialog = save_kill_time_dialog
         save_kill_time_dialog.open = True
         page.update()
-
     def close_save_kill_time_dialog(e):
         save_kill_time_dialog.open = False
         page.update()
-
     save_kill_time_dialog = ft.AlertDialog(
         modal=True,
         content=ft.Text("保存しました"),
@@ -460,31 +490,22 @@ def main(page):
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e: print("Modal dialog dismissed!"),
     )
-
-    copy_kill_time_button = ft.ElevatedButton(text='コピー', on_click=on_copy_kill_time_button_clicked)
     save_kill_time_button = ft.ElevatedButton(text='ファイルに保存', on_click=on_save_kill_time_button_clicked)
 
+    
 
 
+    start_button = ft.ElevatedButton(text="開始", on_click=start_button_clicked)
+    stop_button = ft.ElevatedButton(text="停止", on_click=stop_button_clicked)
+    extract_button = ft.ElevatedButton(text="出力", on_click=extract_button_clicked)
 
 
     
 
     
 
-
-    home_column = ft.Column(controls=[     
-        ft.Row(controls=[app_close_button, start_button, stop_button, extract_button, kill_time_offset_textbox, ign_textbox]), 
-        ft.Row(controls=[input_file_textbox, select_input_file_button]), 
-        ft.Row(controls=[output_file_textbox, select_output_file_button]), 
-        ft.Row(controls=[processing_status_text]), 
-        ft.Row(controls=[ft.Column([ft.Text("処理状況"), progress_bar, image_panels]), ft.Column([preview_image, preview_control_buttons])]), 
-        # ft.Row(controls=[image_panels]), 
-        ft.Row(controls=[ft.Column([ft.Text("ログ"), kill_time_log_container])]), 
-        ft.Row(controls=[copy_kill_time_log_button, save_kill_time_log_button]), 
-    ])
     processing_status.current.value = '待機中'
-    # page.add(home_column)
+
 
     def get_normal_button_container(c):
         container = ft.Container(
@@ -493,23 +514,55 @@ def main(page):
             # padding=10,
             alignment=ft.alignment.center,
             # border_radius=10,
-            
             )
         return container
     
+    def get_container(c, w=c.width, h=c.height, m=c.margin, p=c.padding):
+        container = ft.Container(
+            content=c,
+            margin=m,
+            padding=p,
+            alignment=ft.alignment.center,
+            # border_radius=10,
+            border=ft.border.all(1, ft.colors.WHITE), 
+            width=w, 
+            height=h, 
+            )
+        return container
     
+    preview_image_control_buttons = ft.Row(
+        [get_normal_button_container(play_preview_button), 
+        #  get_normal_button_container(stop_preview_button), 
+         ], 
+        vertical_alignment=ft.CrossAxisAlignment.CENTER, 
+        alignment=ft.MainAxisAlignment.CENTER
+        )
+    
+    preview_image_info_text = ft.Text("preview")
+
+
+    
+    def button_clicked1(e):
+        update_page()
+
+    def button_clicked2(e):
+        progress_bar.value = 0.1
 
     page.add(
         ft.Row(
             [
                 get_normal_button_container(input_file_textbox),
                 get_normal_button_container(select_input_file_button), 
+                get_normal_button_container(output_file_textbox), 
+                get_normal_button_container(select_output_file_button), 
+                
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            width=page.width
         ),
         ft.Row(
+            controls=
             [
+                
                 get_normal_button_container(app_close_button), 
                 get_normal_button_container(start_button), 
                 get_normal_button_container(stop_button),
@@ -518,21 +571,68 @@ def main(page):
                 get_normal_button_container(kill_time_offset_textbox),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-            width=page.width
+            # width=page.width
         ),
         ft.Divider(),
+
+
+        
+
+    # ft.ElevatedButton("update", on_click=set_progress_bar_value), 
+    # ft.ElevatedButton("value change", on_click=button_clicked2), 
 
         ft.Row(
             [
                 ft.Column(
+
                                 [ 
-                                    get_normal_button_container(processing_status_text), 
-                                    get_normal_button_container(progress_bar), 
-                                    get_normal_button_container(preview_image), 
-                                    ft.Row([get_normal_button_container(play_preview_button), get_normal_button_container(stop_preview_button)]), 
-                                    get_normal_button_container(image_panels),
+                                    # get_normal_button_container(processing_status_text), 
+                                    # get_normal_button_container(progress_bar), 
+                                    processing_status_text, 
+                                    progress_value_text, 
+                                    progress_bar, 
+                                    ft.Row([
+                                            
+
+                                            get_container(
+                                                ft.Column([
+                                                    # get_normal_button_container(preview_image_info_text)
+                                                    preview_image_info_text, 
+                                                    get_normal_button_container(preview_image), 
+                                                    preview_image_control_buttons
+                                                    ], 
+                                            # alignment=ft.MainAxisAlignment.CENTER, 
+                                            horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+                                            # spacing=0, 
+                                            ), h=260, p=10
+                                            ), 
+                                        
+                                            get_container(
+                                                ft.Column(
+                                                    [
+                                                    forward_preview_image_list_button, 
+                                                    image_panels_container, 
+                                                    back_preview_image_list_button
+                                                    ], 
+                                                    alignment=ft.MainAxisAlignment.CENTER, 
+                                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+                                                    # spacing=0,
+                                                ), 
+                                                h=260
+                                            ), 
+                                
+                                
+                                            
+                                            
+                                            ], 
+                                            alignment=ft.MainAxisAlignment.CENTER, 
+                                            vertical_alignment=ft.CrossAxisAlignment.CENTER
+                                            ), 
+                                     
+                                    # ft.Row([get_normal_button_container(play_preview_button), get_normal_button_container(stop_preview_button)]), 
+                                    
                                 ],
-                                alignment=ft.MainAxisAlignment.CENTER, 
+                                # alignment=ft.MainAxisAlignment.CENTER, 
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             )
                         
@@ -553,7 +653,7 @@ def main(page):
                                     
                                      
                                 ],
-                                alignment=ft.MainAxisAlignment.CENTER, 
+                                # alignment=ft.MainAxisAlignment.CENTER, 
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             )
             ], 
@@ -564,8 +664,6 @@ def main(page):
 
     )
 
-    
-    print(page.window_width)
 
     page.window_width = 1000
     page.update()
@@ -603,7 +701,7 @@ def main(page):
     #     page.update()
     
     
-    
+
 
     
 

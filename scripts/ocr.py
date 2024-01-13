@@ -7,10 +7,11 @@ import csv
 from moviepy.editor import *
 from tqdm import tqdm
 import asyncio
+import flet_ocr
 
 
 # 各種設定
-ign = "kkaNbu"
+ign = None
 frame_freq = 1.0
 kill_time_start_offset = 6
 kill_time_end_offset = 3
@@ -20,8 +21,12 @@ fps = None
 
 preview_thumbnails = []
 
-current_frame = None
+# current_frame = None
+detected_kill_times = []
+detected_kill_frames = []
 
+finished = False
+progress_value = 0
 
 
 
@@ -40,6 +45,7 @@ def nothing(x):
 
 def play_previw_video(video_path):
     cap = cv2.VideoCapture(video_path)
+
 
 
 def proc(img_raw):
@@ -78,9 +84,13 @@ def get_preview_thumbnail(sec):
     ret, frame = cap.read()
     return frame
 
-def proc_new(video_path):
+def proc_new(video_path=None, ign=None):
     global cap
     global fps
+    global detected_kill_frames
+    global detected_kill_times
+    global finished
+    global progress_value
     # 変数を初期化
     frame_count = 0
     detected_count = 0
@@ -96,6 +106,8 @@ def proc_new(video_path):
 
     while True:
         try:
+            if finished == True:
+                break
             # フレームの読み込み
             ret, frame = cap.read()
             # フレームが読み込めなくなったら終了
@@ -103,6 +115,11 @@ def proc_new(video_path):
                 break
 
             current_time_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
+            current_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+
+            progress_value = round(current_frame/total_frames, 3)
+            # print(progress_value)
+            # print(current_frame)
 
             # 指定した時間ごとにフレームを抽出
             if frame_count % int(fps*frame_freq) == 0:
@@ -115,21 +132,26 @@ def proc_new(video_path):
                     print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {int(minutes)}分 {seconds:.2f}秒")
                     preview_thumbnails.append(frame)
                     detected_kill_times.append(current_time_sec)
+                    detected_kill_frames.append(current_frame)
                     detected_count += 1
                     new_frame_pos = int(cap.get(cv2.CAP_PROP_POS_FRAMES) + fps * 10)
                     if new_frame_pos <= total_frames:
                         cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame_pos)
                     
-            frame_count += 1
-            # progress_value = float('{:.1f}'.format((frame_count/total_frames*100)))
-            progress_value = 0.1
-            # flet_ocr.set_progress_bar(progress_value)
             
+            frame_count += 1
+            
+            # print(progress_value)
+            # progress_value = 0.1
+            
+            # flet_ocr.set_progress_bar_value(progress_value)
 
             
         except KeyboardInterrupt:
             break
     cap.release()
+    finished = True
+    progress_value = 1.0
     return detected_kill_times
 
 
