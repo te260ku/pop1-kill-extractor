@@ -79,7 +79,7 @@ def main(page):
     # page.appbar = appbar
 
     progress_bar = ft.ProgressBar(
-        width=385, 
+        width=300, 
         color="pink", 
         bgcolor="#eeeeee"
     )
@@ -115,7 +115,7 @@ def main(page):
     preview_image = ft.Image(
         fit=ft.ImageFit.FIT_WIDTH, 
         # height=192/2,
-        width=300, 
+        width=400, 
         src_base64 = initial_image_base64, 
         repeat=ft.ImageRepeat.NO_REPEAT,
         )
@@ -384,9 +384,9 @@ def main(page):
                 p.border=None
         page.update()
 
-    image_panels = ft.Column(
-        height=140,
-        width=120,
+    image_panels = ft.Row(
+        # height=90,
+        width=180,
         # child_aspect_ratio=1.0,
         # horizontal=True,
         scroll=ft.ScrollMode.HIDDEN, 
@@ -400,16 +400,11 @@ def main(page):
                 # src=f"https://picsum.photos/150/150?{i}",
                 src_base64=initial_image_base64, 
                 # fit=ft.ImageFit.FIT_WIDTH,
-                # width=140, 
+                width=70, 
                 # repeat=ft.ImageRepeat.NO_REPEAT,
                 # border_radius=ft.border_radius.all(10),
             )
         )
-
-    # for p in panels:
-    #     images.controls.append(p)
-
-
     
     for i in range(0, 10):
         c = ft.Container(
@@ -439,7 +434,7 @@ def main(page):
         content=image_panels, 
         border=ft.border.all(1, ft.colors.WHITE), 
         # padding=ft.padding.symmetric(0, 20),
-        margin=ft.margin.symmetric(0, 20),
+        # margin=ft.margin.symmetric(0, 20),
 
     )
     '''************************************************************
@@ -505,6 +500,7 @@ def main(page):
     
 
     processing_status.current.value = '待機中'
+    progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
 
 
     def get_normal_button_container(c):
@@ -588,38 +584,50 @@ def main(page):
                                 [ 
                                     # get_normal_button_container(processing_status_text), 
                                     # get_normal_button_container(progress_bar), 
-                                    processing_status_text, 
-                                    progress_value_text, 
-                                    progress_bar, 
+                                    
                                     ft.Row([
                                             
 
                                             get_container(
                                                 ft.Column([
+                                                    ft.Row([
+                                                        processing_status_text, 
+                                                        progress_value_text, 
+                                                    ]), 
+                                                    
+                                                    progress_bar, 
                                                     # get_normal_button_container(preview_image_info_text)
                                                     preview_image_info_text, 
                                                     get_normal_button_container(preview_image), 
-                                                    preview_image_control_buttons
+                                                    preview_image_control_buttons, 
+                                                    ft.Row(
+                                                        [
+                                                            forward_preview_image_list_button, 
+                                                            image_panels_container, 
+                                                            back_preview_image_list_button
+                                                        ]
+                                                    )
+                                                    
                                                     ], 
                                             # alignment=ft.MainAxisAlignment.CENTER, 
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                                             # spacing=0, 
-                                            ), h=260, p=10
+                                            ), h=400, p=10
                                             ), 
                                         
-                                            get_container(
-                                                ft.Column(
-                                                    [
-                                                    forward_preview_image_list_button, 
-                                                    image_panels_container, 
-                                                    back_preview_image_list_button
-                                                    ], 
-                                                    alignment=ft.MainAxisAlignment.CENTER, 
-                                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
-                                                    # spacing=0,
-                                                ), 
-                                                h=260
-                                            ), 
+                                            # get_container(
+                                            #     ft.Column(
+                                            #         [
+                                            #         forward_preview_image_list_button, 
+                                            #         image_panels_container, 
+                                            #         back_preview_image_list_button
+                                            #         ], 
+                                            #         alignment=ft.MainAxisAlignment.CENTER, 
+                                            #         horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+                                            #         # spacing=0,
+                                            #     ), 
+                                            #     h=260
+                                            # ), 
                                 
                                 
                                             
@@ -655,7 +663,8 @@ def main(page):
                                 ],
                                 # alignment=ft.MainAxisAlignment.CENTER, 
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                            )
+                )
+                
             ], 
             expand=True, 
             alignment=ft.MainAxisAlignment.CENTER, 
