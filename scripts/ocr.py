@@ -8,6 +8,7 @@ from moviepy.editor import *
 from tqdm import tqdm
 import asyncio
 import flet_ocr
+from os.path import dirname
 
 
 # 各種設定
@@ -28,6 +29,8 @@ detected_kill_frames = []
 finished = False
 progress_value = 0
 
+total_time = None
+
 
 
 
@@ -45,6 +48,10 @@ def nothing(x):
 
 def play_previw_video(video_path):
     cap = cv2.VideoCapture(video_path)
+
+def frames_to_seconds(frame_count, fps):
+    seconds = frame_count / fps
+    return seconds
 
 
 
@@ -91,6 +98,7 @@ def proc_new(video_path=None, ign=None):
     global detected_kill_times
     global finished
     global progress_value
+    global total_time
     # 変数を初期化
     frame_count = 0
     detected_count = 0
@@ -102,6 +110,8 @@ def proc_new(video_path=None, ign=None):
     fps = cap.get(cv2.CAP_PROP_FPS)
     # 総フレーム数を取得
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_time = frames_to_seconds(total_frames, fps)
+    
     print(total_frames)
 
     while True:
@@ -153,6 +163,85 @@ def proc_new(video_path=None, ign=None):
     finished = True
     progress_value = 1.0
     return detected_kill_times
+
+
+
+
+def cut_video(input_file, output_file, segments):
+    clips = []
+    # enumerate(tqdm(segments, desc='Processing', unit='segment')):
+    for segment in segments:
+        start_time = segment[0]
+        end_time = segment[1]
+        clip = VideoFileClip(input_file).subclip(start_time, end_time)
+        clips.append(clip)
+
+    print(clips)
+
+    final_clip = concatenate_videoclips(clips)
+    # final_clip.write_videofile(output_file)
+    # final_clip.write_videofile(output_file, audio_codec='aac')
+    final_clip.write_videofile(
+        output_file,  
+        codec='libx264', 
+        audio_codec='aac', 
+        temp_audiofile='temp-audio.m4a', 
+        remove_temp=True
+    )
+
+
+
+
+def calc_segments():
+    global detected_kill_times
+    def trim_within_total_time(t):
+        global total_time
+        result = t
+        if t < 0:
+            result = 0
+        elif t > total_time:
+            result = int(total_time)
+        return result
+
+
+    segments = []
+    # tm = [4, 17]
+    tm = detected_kill_times
+    for peak_time in tm:
+        start_time = trim_within_total_time(int(peak_time-3))
+        end_time = trim_within_total_time(int(peak_time+3))
+        
+        segments.append((start_time, end_time))
+    return segments
+
+
+def create_video(input_video_file, output_video_path):
+    global total_time
+
+
+    print("動画を切り出しています")
+
+
+    cap = cv2.VideoCapture(input_video_file)
+    # フレームレートを取得
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    # 総フレーム数を取得
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_time = frames_to_seconds(total_frames, fps)
+    cap.release()
+
+
+    seg = calc_segments()
+
+    print(seg)
+    
+    output_video_file = os.path.join(output_video_path, 'output_newnew.mp4')
+    cut_video(input_video_file, output_video_file, seg)
+    # try:
+    #     cut_video(input_video_file, output_video_file, segments)
+    #     return True
+    # except:
+    #     return False
 
 
 # while True:

@@ -16,7 +16,7 @@ import asyncio
 import math
 import threading
 
-target_video_path = ""
+input_video_path = ""
 
 
 
@@ -181,14 +181,14 @@ def main(page):
 
 
     def start_button_clicked(e):
-        global target_video_path
-        print(target_video_path)
+        global input_video_path
+        print(input_video_path)
         info_is_incomplete = False
         alert_modal_text_value = ""
         if (is_empty_str(ign_textbox.value)):
             info_is_incomplete = True
             alert_modal_text_value += "IGNを入力してください\n"
-        if (is_empty_str(target_video_path)):
+        if (is_empty_str(input_video_path)):
             info_is_incomplete = True
             alert_modal_text_value += "動画を選択してください\n"
         if (info_is_incomplete):
@@ -201,7 +201,7 @@ def main(page):
         thread1 = threading.Thread(target=set_p_value)
         thread1.start()
 
-        detected_kill_time = ocr.proc_new(video_path=target_video_path, ign=ign_textbox.value)
+        detected_kill_time = ocr.proc_new(video_path=input_video_path, ign=ign_textbox.value)
 
         
         print(detected_kill_time)
@@ -226,19 +226,28 @@ def main(page):
         page.update()
     
     def extract_button_clicked(e):
-        pass
 
+        # thread1 = threading.Thread(target=c_video)
+        # thread1.start()
+        # c_video()
+
+        ocr.create_video(input_video_file=input_video_path, output_video_path=output_directory_path.current.value)
+        # ocr.create_video("C:/Users/tetsuro/pop1-kill-extractor/videos/output.mp4", "C:/Users/tetsuro/pop1-kill-extractor/videos")
+        # export_video_result = "エクスポートが完了しました" if result else "エクスポートに失敗しました"
+        # print(export_video_result)
+
+    
         
     '''************************************************************
     ** 動画を指定するダイアログ
     ************************************************************'''
     image_extensions = ["mp4"]
     def on_file_picked(e: ft.FilePickerResultEvent):
-        global target_video_path
+        global input_video_path
         if e.files:
             target_file.current.value = e.files[0].path
-            target_video_path = e.files[0].path
-            print(target_video_path)
+            input_video_path = e.files[0].path
+            print(input_video_path)
             page.update()
     input_file_selector = ft.FilePicker(on_result=on_file_picked)
     page.overlay.append(input_file_selector)
@@ -346,6 +355,9 @@ def main(page):
     
     def ign_textbox_changed(e):
          return e.control.value
+    
+    def output_video_file_name_textbox_changed(e):
+         return e.control.value
         
 
     kill_time_offset_textbox = ft.TextField(
@@ -356,6 +368,12 @@ def main(page):
 
     ign_textbox = ft.TextField(
         label="IGN",
+        width=150, 
+        on_change=kill_time_offset_textbox_changed,
+    )
+
+    output_video_file_name_textbox = ft.TextField(
+        label="出力ファイル名",
         width=150, 
         on_change=kill_time_offset_textbox_changed,
     )
@@ -377,7 +395,7 @@ def main(page):
         for p in image_panels.controls:
             if p.data == selected_preview_image_index:
                 p.border=ft.border.all(5, ft.colors.PINK_600)
-                # preview_image.src_base64 = convert_cv_to_base64(ocr.preview_thumbnails[selected_preview_image_index])
+                preview_image.src_base64 = convert_cv_to_base64(ocr.preview_thumbnails[selected_preview_image_index])
                 
                 
             else:
@@ -565,6 +583,7 @@ def main(page):
                 get_normal_button_container(extract_button),
                 get_normal_button_container(ign_textbox),
                 get_normal_button_container(kill_time_offset_textbox),
+                get_normal_button_container(output_video_file_name_textbox),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             # width=page.width
