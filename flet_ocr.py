@@ -20,16 +20,8 @@ input_video_path = ""
 
 
 
-
-
-
-
-
 def main(page):
-
     set_page(page)
-
-
 
 
     settings_view = ft.Text("settings")
@@ -60,11 +52,11 @@ def main(page):
 
 
     appbar = ft.AppBar(
-            leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
+            # leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
             leading_width=100,
-            title=ft.Text("POP1 Kill Extractor",size=32, text_align="start"),
+            title=ft.Text("POP1 Kill Extractor",size=22, text_align="start"),
             center_title=False,
-            toolbar_height=75,
+            toolbar_height=55,
             bgcolor=ft.colors.LIGHT_BLUE_ACCENT_700,
             actions=[
                 ft.Container(
@@ -76,7 +68,7 @@ def main(page):
                 )
             ],
         )
-    # page.appbar = appbar
+    page.appbar = appbar
 
     progress_bar = ft.ProgressBar(
         width=300, 
@@ -96,6 +88,21 @@ def main(page):
     output_directory_path = ft.Ref[ft.Text]()
     processing_status = ft.Ref[ft.Text]()
     progress_value = ft.Ref[ft.Text]()
+
+    # progress_bar = ft.ProgressBar(
+    #     width=385, 
+    #     color="pink", 
+    #     bgcolor="#eeeeee"
+    # )
+    progress_bar.value = 0
+
+
+    processing_status_text = ft.Text(ref=processing_status)
+
+    progress_value_text = ft.Text(ref=progress_value)
+
+    
+
     
     
     output_folder = ft.Ref[ft.Text]()
@@ -109,6 +116,9 @@ def main(page):
 
 
 
+
+
+
     '''************************************************************
     ** プレビューエリア
     ************************************************************'''
@@ -119,6 +129,7 @@ def main(page):
         src_base64 = initial_image_base64, 
         repeat=ft.ImageRepeat.NO_REPEAT,
         )
+    image_panels_container = ft.Container()
     def play_preview_button_clicked(e):
         pass
     def stop_preview_button_clicked(e):
@@ -138,7 +149,9 @@ def main(page):
 
 
 
-
+    '''************************************************************
+    ** モーダル
+    ************************************************************'''
     alert_modal_text = ft.Text("")
     def show_alert_modal():
         page.dialog = alert_dialog
@@ -157,15 +170,23 @@ def main(page):
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e: print("Modal dialog dismissed!"),
     )
+    '''************************************************************
+    ** 
+    ************************************************************'''
 
     
+
+
     def is_empty_str(val):
         return len(val) == 0
+    
 
+    def convert_cv_to_base64(img):
+        _, encoded = cv2.imencode(".jpg", img)
+        img_str = base64.b64encode(encoded).decode("ascii")
+        return img_str
+    
 
-    '''************************************************************
-    ** スタート
-    ************************************************************'''
     def set_p_value():
         while ocr.finished is False:
             progress_bar.value = ocr.progress_value
@@ -176,12 +197,118 @@ def main(page):
         progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
         page.update()
         print("progress complete")
-        
+
+
+
+    '''************************************************************
+    ** 切り抜き動画パネル
+    ************************************************************'''
+    # image_panels = generate_image_panels(initial_image_base64)
+    def on_image_panel_clicked(e):
+        # print(e.control.data)
+        selected_preview_image_index = e.control.data
+        # print(ocr.detected_kill_times)
+
+        for p in image_panels.controls:
+            if p.data == selected_preview_image_index:
+                p.border=ft.border.all(5, ft.colors.PINK_600)
+                if (len(ocr.preview_thumbnails) > selected_preview_image_index):
+                    preview_image.src_base64 = convert_cv_to_base64(ocr.preview_thumbnails[selected_preview_image_index])
+            else:
+                p.border=None
+        page.update()
+
+    image_panels = ft.Row(
+        # height=90,
+        width=300,
+        # child_aspect_ratio=1.0,
+        # horizontal=True,
+        scroll=ft.ScrollMode.HIDDEN, 
+        alignment=ft.alignment.center, 
+    )
+
+    panels = []
+    for i in range(0, 10):
+        panels.append(
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Image(
+                            # src=f"https://picsum.photos/150/150?{i}",
+                            src_base64=initial_image_base64, 
+                            # fit=ft.ImageFit.FIT_WIDTH,
+                            width=70, 
+                            # repeat=ft.ImageRepeat.NO_REPEAT,
+                            # border_radius=ft.border_radius.all(10),
+                        ), 
+                        ft.Text("00:00")
+                    ], 
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ), 
+            ) 
+        )
+    
+    # for i in range(0, 10):
+    #     c = ft.Container(
+    #         content=panels[i], 
+    #         on_click=on_image_panel_clicked, 
+    #         data=i, 
+    #         alignment=ft.alignment.center, 
+    #         # width=140,
+    #         # padding=ft.padding.symmetric(0, 20), 
+    #         # margin=ft.margin.symmetric(0, 20), 
+    #         )
+    #     image_panels.controls.append(c)
+    
+    # image_panels = ft.Row(controls=[images])
+
+    forward_preview_image_list_button = ft.IconButton(
+        icon=ft.icons.KEYBOARD_ARROW_LEFT, 
+        on_click=lambda _: image_panels.scroll_to(delta=-100, duration=500), 
+        )
+    back_preview_image_list_button = ft.IconButton(
+        icon=ft.icons.KEYBOARD_ARROW_RIGHT, 
+        on_click=lambda _: image_panels.scroll_to(delta=100, duration=500), 
+        )
+    
+    # image_panels_container = None
+    image_panels_container_processed = ft.Container(
+        content=image_panels, 
+        border=ft.border.all(1, ft.colors.WHITE), 
+        # padding=ft.padding.symmetric(0, 20),
+        # margin=ft.margin.symmetric(0, 20),
+    )
+    image_panels_container_dummy = ft.Container(
+        # content=image_panels, 
+        width=300, 
+        height=70, 
+        border=ft.border.all(1, ft.colors.WHITE), 
+        # padding=ft.padding.symmetric(0, 20),
+        # margin=ft.margin.symmetric(0, 20),
+        disabled=True
+    )
+
+    image_panels_container = image_panels_container_dummy
+
+
+
+    
+    '''************************************************************
+    ** 
+    ************************************************************'''
     
 
 
+
+
+    '''************************************************************
+    ** スタートボタン
+    ************************************************************'''
     def start_button_clicked(e):
         global input_video_path
+
+    
+
         print(input_video_path)
         info_is_incomplete = False
         alert_modal_text_value = ""
@@ -196,31 +323,77 @@ def main(page):
             show_alert_modal()
             return
         print(ign_textbox.value)
+
+        
         
 
         thread1 = threading.Thread(target=set_p_value)
         thread1.start()
 
-        detected_kill_time = ocr.proc_new(video_path=input_video_path, ign=ign_textbox.value)
+        detected_kill_times = ocr.proc_new(video_path=input_video_path, ign=ign_textbox.value)
 
         
-        print(detected_kill_time)
+        print(detected_kill_times)
         print("===Finish===")
-        show_preview_images()
+        
+
+        # show_preview_images()
+
+        preview_thumbnails = ocr.preview_thumbnails
+
+        
+        panels = []
+
+        
+        for i in range(0, len(detected_kill_times)):
+            thumbnail = preview_thumbnails[i]
+            panels.append(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Image(
+                                # src=f"https://picsum.photos/150/150?{i}",
+                                src_base64=convert_cv_to_base64(thumbnail), 
+                                # fit=ft.ImageFit.FIT_WIDTH,
+                                width=70, 
+                                # repeat=ft.ImageRepeat.NO_REPEAT,
+                                # border_radius=ft.border_radius.all(10),
+                            ), 
+                            ft.Text("00:00")
+                        ], 
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                    ), 
+                ) 
+            )
+        
+        for i in range(0, len(detected_kill_times)):
+            c = ft.Container(
+                content=panels[i], 
+                on_click=on_image_panel_clicked, 
+                data=i, 
+                alignment=ft.alignment.center, 
+                # width=140,
+                # padding=ft.padding.symmetric(0, 20), 
+                # margin=ft.margin.symmetric(0, 20), 
+                )
+            image_panels.controls.append(c)
+        
+
+        image_panels_container_processed.content = image_panels
+        image_panels_container.content = image_panels_container_processed
+        image_panels_container.disabled = False
+        page.update()
         update_kill_time_log()
+
 
     def update_kill_time_log():
         pass
 
 
-    def convert_cv_to_base64(img):
-        _, encoded = cv2.imencode(".jpg", img)
-        img_str = base64.b64encode(encoded).decode("ascii")
-        return img_str
-    
     def stop_button_clicked(e):
         ocr.finished = True
-        
+
+
     def show_preview_images():
         preview_thumbnails = ocr.preview_thumbnails
         count = 0
@@ -231,24 +404,25 @@ def main(page):
         page.update()
     
     def extract_button_clicked(e):
-
-        # thread1 = threading.Thread(target=c_video)
-        # thread1.start()
-        # c_video()
         if (is_empty_str(output_video_file_name_textbox.value)):
+            # 出力ファイル名が入力されていない場合は処理を実行しない
             alert_modal_text_value = "出力ファイル名を入力してください\n"
             alert_modal_text.value = alert_modal_text_value
             show_alert_modal()
             return
         
-
         ocr.create_video(input_video_file=input_video_path, output_video_path=output_directory_path.current.value)
-        # ocr.create_video("C:/Users/tetsuro/pop1-kill-extractor/videos/output.mp4", "C:/Users/tetsuro/pop1-kill-extractor/videos")
         # export_video_result = "エクスポートが完了しました" if result else "エクスポートに失敗しました"
         # print(export_video_result)
-
+    '''************************************************************
+    ** 
+    ************************************************************'''
     
         
+
+
+
+
     '''************************************************************
     ** 動画を指定するダイアログ
     ************************************************************'''
@@ -272,9 +446,14 @@ def main(page):
         "ファイルを選択", 
         on_click=show_file_picker
         )
-    input_file_textbox = ft.TextField(ref=target_file, label="ファイル", read_only=True, width=200,)
+    input_file_textbox = ft.TextField(ref=target_file, label="ファイル", read_only=True, width=200)
+    '''************************************************************
+    ** 
+    ************************************************************'''
+    
 
     
+
     '''************************************************************
     ** 出力先のディレクトリを指定するダイアログ
     ************************************************************'''
@@ -291,27 +470,9 @@ def main(page):
         on_click=lambda _: output_directory_selector.get_directory_path(),
         )
     output_file_textbox = ft.TextField(ref=output_directory_path, label="ディレクトリ", read_only=True, width=200,)
-
-    
-
-    
-    
-    # progress_bar = ft.ProgressBar(
-    #     width=385, 
-    #     color="pink", 
-    #     bgcolor="#eeeeee"
-    # )
-    progress_bar.value = 0
-
-
-
-    processing_status_text = ft.Text(ref=processing_status)
-
-    progress_value_text = ft.Text(ref=progress_value)
-
-    
-
-
+    '''************************************************************
+    ** 
+    ************************************************************'''
     
 
     
@@ -357,8 +518,8 @@ def main(page):
 
 
 
-    copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
-    save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
+    # copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
+    # save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
 
 
     def kill_time_offset_textbox_changed(e):
@@ -394,104 +555,7 @@ def main(page):
     
 
     
-    '''************************************************************
-    ** 切り抜き動画パネル
-    ************************************************************'''
-    # image_panels = generate_image_panels(initial_image_base64)
-    def on_image_panel_clicked(e):
-        # print(e.control.data)
-        selected_preview_image_index = e.control.data
-        # print(ocr.detected_kill_times)
-
-        for p in image_panels.controls:
-            if p.data == selected_preview_image_index:
-                p.border=ft.border.all(5, ft.colors.PINK_600)
-                preview_image.src_base64 = convert_cv_to_base64(ocr.preview_thumbnails[selected_preview_image_index])
-                
-                
-            else:
-                p.border=None
-        page.update()
-
-    image_panels = ft.Row(
-        # height=90,
-        width=300,
-        # child_aspect_ratio=1.0,
-        # horizontal=True,
-        scroll=ft.ScrollMode.HIDDEN, 
-        alignment=ft.alignment.center, 
-    )
-
-    panels = []
-    for i in range(0, 10):
-        panels.append(
-            ft.Container(
-                
-                content=ft.Column(
-                    [
-                        ft.Image(
-                            # src=f"https://picsum.photos/150/150?{i}",
-                            src_base64=initial_image_base64, 
-                            # fit=ft.ImageFit.FIT_WIDTH,
-                            width=70, 
-                            # repeat=ft.ImageRepeat.NO_REPEAT,
-                            # border_radius=ft.border_radius.all(10),
-                        ), 
-                        ft.Text("00:00")
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                ), 
-                
-                
-            )
-
-            
-            
-        )
     
-    for i in range(0, 10):
-        c = ft.Container(
-            content=panels[i], 
-            on_click=on_image_panel_clicked, 
-            data=i, 
-            alignment=ft.alignment.center, 
-            # width=140,
-            # padding=ft.padding.symmetric(0, 20), 
-            # margin=ft.margin.symmetric(0, 20), 
-            )
-        image_panels.controls.append(c)
-    
-    # image_panels = ft.Row(controls=[images])
-
-
-    forward_preview_image_list_button = ft.IconButton(
-        icon=ft.icons.KEYBOARD_ARROW_LEFT, 
-        on_click=lambda _: image_panels.scroll_to(delta=-100, duration=500), 
-        )
-    back_preview_image_list_button = ft.IconButton(
-        icon=ft.icons.KEYBOARD_ARROW_RIGHT, 
-        on_click=lambda _: image_panels.scroll_to(delta=100, duration=500), 
-        )
-    
-    image_panels_container = ft.Container(
-        content=image_panels, 
-        border=ft.border.all(1, ft.colors.WHITE), 
-        # padding=ft.padding.symmetric(0, 20),
-        # margin=ft.margin.symmetric(0, 20),
-    )
-    image_panels_container = ft.Container(
-        # content=image_panels, 
-        width=300, 
-        height=70, 
-        border=ft.border.all(1, ft.colors.WHITE), 
-        # padding=ft.padding.symmetric(0, 20),
-        # margin=ft.margin.symmetric(0, 20),
-    )
-
-    image_panels_container.disabled = True
-    '''************************************************************
-    ** 
-    ************************************************************'''
 
 
     
@@ -501,8 +565,9 @@ def main(page):
     app_close_button = ft.ElevatedButton(text='アプリ終了', on_click=app_close)
 
 
-    
+    # detected_kill_times = [10, 20]
     def on_copy_kill_time_button_clicked(e):
+        page.set_clipboard("This value comes from Flet app")
         page.dialog = copy_kill_time_dialog
         copy_kill_time_dialog.open = True
         page.update()
@@ -565,7 +630,15 @@ def main(page):
             )
         return container
     
-    def get_container(c, w=c.width, h=c.height, m=c.margin, p=c.padding):
+    def get_container(c, w=None, h=None, m=None, p=None):
+        if (w == None):
+            w = c.width
+        if (h == None):
+            h = c.height
+        # if (m == None):
+        #     m = c.margin
+        # if (p == None):
+        #     p = c.padding
         container = ft.Container(
             content=c,
             margin=m,
@@ -589,9 +662,7 @@ def main(page):
     preview_image_info_text = ft.Text("preview")
 
 
-
-
-
+    
     page.add(
         # ft.Row(
         #     [
@@ -645,7 +716,6 @@ def main(page):
                                                     ]), 
                                                     
                                                     progress_bar, 
-                                                    # get_normal_button_container(preview_image_info_text)
                                                     preview_image_info_text, 
                                                     get_normal_button_container(preview_image), 
                                                     preview_image_control_buttons, 
@@ -746,7 +816,8 @@ def main(page):
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
                 )]), 
                 
-                # h=500, p=10
+                # h=500, 
+                p=10
                 
                 
                 )
@@ -791,24 +862,14 @@ def main(page):
         ),
     )
     
-    
-
-    # for i in range(0, 101):
-    #     progress_bar.value = i * 0.01
-    #     time.sleep(0.1)
-    #     page.update()
-    
-    
 
 
-    
 
 
 def set_page(page: ft.Page):
     '''
     画面全体の初期設定
     '''
-    
 
     page.title = "POP1 Kill Extractor"
 
