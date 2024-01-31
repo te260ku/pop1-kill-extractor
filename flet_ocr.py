@@ -207,6 +207,11 @@ def main(page):
         print(detected_kill_time)
         print("===Finish===")
         show_preview_images()
+        update_kill_time_log()
+
+    def update_kill_time_log():
+        pass
+
 
     def convert_cv_to_base64(img):
         _, encoded = cv2.imencode(".jpg", img)
@@ -230,6 +235,12 @@ def main(page):
         # thread1 = threading.Thread(target=c_video)
         # thread1.start()
         # c_video()
+        if (is_empty_str(output_video_file_name_textbox.value)):
+            alert_modal_text_value = "出力ファイル名を入力してください\n"
+            alert_modal_text.value = alert_modal_text_value
+            show_alert_modal()
+            return
+        
 
         ocr.create_video(input_video_file=input_video_path, output_video_path=output_directory_path.current.value)
         # ocr.create_video("C:/Users/tetsuro/pop1-kill-extractor/videos/output.mp4", "C:/Users/tetsuro/pop1-kill-extractor/videos")
@@ -261,7 +272,7 @@ def main(page):
         "ファイルを選択", 
         on_click=show_file_picker
         )
-    input_file_textbox = ft.TextField(ref=target_file, label="ファイル", read_only=True)
+    input_file_textbox = ft.TextField(ref=target_file, label="ファイル", read_only=True, width=200,)
 
     
     '''************************************************************
@@ -279,7 +290,7 @@ def main(page):
         # icon=ft.icons.FOLDER_OPEN,
         on_click=lambda _: output_directory_selector.get_directory_path(),
         )
-    output_file_textbox = ft.TextField(ref=output_directory_path, label="ディレクトリ", read_only=True)
+    output_file_textbox = ft.TextField(ref=output_directory_path, label="ディレクトリ", read_only=True, width=200,)
 
     
 
@@ -404,7 +415,7 @@ def main(page):
 
     image_panels = ft.Row(
         # height=90,
-        width=180,
+        width=300,
         # child_aspect_ratio=1.0,
         # horizontal=True,
         scroll=ft.ScrollMode.HIDDEN, 
@@ -414,14 +425,28 @@ def main(page):
     panels = []
     for i in range(0, 10):
         panels.append(
-            ft.Image(
-                # src=f"https://picsum.photos/150/150?{i}",
-                src_base64=initial_image_base64, 
-                # fit=ft.ImageFit.FIT_WIDTH,
-                width=70, 
-                # repeat=ft.ImageRepeat.NO_REPEAT,
-                # border_radius=ft.border_radius.all(10),
+            ft.Container(
+                
+                content=ft.Column(
+                    [
+                        ft.Image(
+                            # src=f"https://picsum.photos/150/150?{i}",
+                            src_base64=initial_image_base64, 
+                            # fit=ft.ImageFit.FIT_WIDTH,
+                            width=70, 
+                            # repeat=ft.ImageRepeat.NO_REPEAT,
+                            # border_radius=ft.border_radius.all(10),
+                        ), 
+                        ft.Text("00:00")
+                    ], 
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ), 
+                
+                
             )
+
+            
+            
         )
     
     for i in range(0, 10):
@@ -440,11 +465,11 @@ def main(page):
 
 
     forward_preview_image_list_button = ft.IconButton(
-        icon=ft.icons.KEYBOARD_ARROW_UP, 
+        icon=ft.icons.KEYBOARD_ARROW_LEFT, 
         on_click=lambda _: image_panels.scroll_to(delta=-100, duration=500), 
         )
     back_preview_image_list_button = ft.IconButton(
-        icon=ft.icons.KEYBOARD_ARROW_DOWN, 
+        icon=ft.icons.KEYBOARD_ARROW_RIGHT, 
         on_click=lambda _: image_panels.scroll_to(delta=100, duration=500), 
         )
     
@@ -453,8 +478,17 @@ def main(page):
         border=ft.border.all(1, ft.colors.WHITE), 
         # padding=ft.padding.symmetric(0, 20),
         # margin=ft.margin.symmetric(0, 20),
-
     )
+    image_panels_container = ft.Container(
+        # content=image_panels, 
+        width=300, 
+        height=70, 
+        border=ft.border.all(1, ft.colors.WHITE), 
+        # padding=ft.padding.symmetric(0, 20),
+        # margin=ft.margin.symmetric(0, 20),
+    )
+
+    image_panels_container.disabled = True
     '''************************************************************
     ** 
     ************************************************************'''
@@ -555,40 +589,36 @@ def main(page):
     preview_image_info_text = ft.Text("preview")
 
 
-    
-    def button_clicked1(e):
-        update_page()
 
-    def button_clicked2(e):
-        progress_bar.value = 0.1
+
 
     page.add(
-        ft.Row(
-            [
-                get_normal_button_container(input_file_textbox),
-                get_normal_button_container(select_input_file_button), 
-                get_normal_button_container(output_file_textbox), 
-                get_normal_button_container(select_output_file_button), 
+        # ft.Row(
+        #     [
+        #         get_normal_button_container(input_file_textbox),
+        #         get_normal_button_container(select_input_file_button), 
+        #         get_normal_button_container(output_file_textbox), 
+        #         get_normal_button_container(select_output_file_button), 
                 
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        ),
-        ft.Row(
-            controls=
-            [
+        #     ],
+        #     alignment=ft.MainAxisAlignment.CENTER,
+        # ),
+        # ft.Row(
+        #     controls=
+        #     [
                 
-                get_normal_button_container(app_close_button), 
-                get_normal_button_container(start_button), 
-                get_normal_button_container(stop_button),
-                get_normal_button_container(extract_button),
-                get_normal_button_container(ign_textbox),
-                get_normal_button_container(kill_time_offset_textbox),
-                get_normal_button_container(output_video_file_name_textbox),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            # width=page.width
-        ),
-        ft.Divider(),
+        #         get_normal_button_container(app_close_button), 
+        #         get_normal_button_container(start_button), 
+        #         get_normal_button_container(stop_button),
+        #         get_normal_button_container(extract_button),
+        #         get_normal_button_container(ign_textbox),
+        #         get_normal_button_container(kill_time_offset_textbox),
+        #         get_normal_button_container(output_video_file_name_textbox),
+        #     ],
+        #     alignment=ft.MainAxisAlignment.CENTER,
+        #     # width=page.width
+        # ),
+        # ft.Divider(),
 
 
         
@@ -631,7 +661,7 @@ def main(page):
                                             # alignment=ft.MainAxisAlignment.CENTER, 
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                                             # spacing=0, 
-                                            ), h=400, p=10
+                                            ), h=500, p=10
                                             ), 
                                         
                                             # get_container(
@@ -668,21 +698,61 @@ def main(page):
                     ,
                     ft.VerticalDivider(), 
 
-                    ft.Column(
-                                [ 
-                                    # get_normal_button_container(processing_status_text), 
-                                    ft.Text("ログ", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                    get_container(ft.Row([ft.Column(
+
                         
-                                    kill_time_log_container, 
-                                    ft.Text("検出したキル", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                    kill_time_table_container, 
+                                [ 
+                                    ft.Row([
+                                        get_normal_button_container(input_file_textbox),
+                                        get_normal_button_container(select_input_file_button), 
+                                    ]), 
+
+                                    
+                                    get_normal_button_container(ign_textbox),
+
+                                    ft.Row([
+                                        get_normal_button_container(start_button), 
+                                        get_normal_button_container(stop_button),
+                                    ]), 
+                                    
+
+
+
+                                    ft.Row([
+                                        get_normal_button_container(output_file_textbox), 
+                                        get_normal_button_container(select_output_file_button), 
+                                    ]), 
+                
+                                    
+                                    get_normal_button_container(output_video_file_name_textbox),
+                                    get_normal_button_container(kill_time_offset_textbox),
+                                    
+                                    
+                
+                
+                                    get_normal_button_container(extract_button),
+                                    # get_normal_button_container(processing_status_text), 
+                                    # ft.Text("ログ", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                        
+                                    # kill_time_log_container, 
+                                    # ft.Text("検出したキル", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                                    # kill_time_table_container, 
+                                    # kill_time_log_table, 
                                     ft.Row([copy_kill_time_button, save_kill_time_button])
                                     
                                      
                                 ],
                                 # alignment=ft.MainAxisAlignment.CENTER, 
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )]), 
+                
+                # h=500, p=10
+                
+                
                 )
+                    
+
+                    
                 
             ], 
             expand=True, 
