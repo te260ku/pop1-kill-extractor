@@ -141,7 +141,9 @@ def proc_new(video_path=None, ign=None):
                     minutes, seconds = divmod(current_time_sec, 60)
                     print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {int(minutes)}分 {seconds:.2f}秒")
                     preview_thumbnails.append(frame)
-                    detected_kill_times.append(current_time_sec)
+
+                    rounded_time_sec = round(current_time_sec, 2)
+                    detected_kill_times.append(rounded_time_sec)
                     detected_kill_frames.append(current_frame)
                     detected_count += 1
                     new_frame_pos = int(cap.get(cv2.CAP_PROP_POS_FRAMES) + fps * 10)
@@ -167,7 +169,8 @@ def proc_new(video_path=None, ign=None):
 
 
 
-def cut_video(input_file, output_file, segments):
+def cut_video(input_file, output_video_path, segments, separated):
+    
     clips = []
     # enumerate(tqdm(segments, desc='Processing', unit='segment')):
     for segment in segments:
@@ -178,16 +181,33 @@ def cut_video(input_file, output_file, segments):
 
     print(clips)
 
-    final_clip = concatenate_videoclips(clips)
-    # final_clip.write_videofile(output_file)
-    # final_clip.write_videofile(output_file, audio_codec='aac')
-    final_clip.write_videofile(
-        output_file,  
-        codec='libx264', 
-        audio_codec='aac', 
-        temp_audiofile='temp-audio.m4a', 
-        remove_temp=True
-    )
+    if (separated == False):
+        output_file = os.path.join(output_video_path, 'output_newnew.mp4')
+        final_clip = concatenate_videoclips(clips)
+        # final_clip.write_videofile(output_file)
+        # final_clip.write_videofile(output_file, audio_codec='aac')
+        final_clip.write_videofile(
+            output_file,  
+            codec='libx264', 
+            audio_codec='aac', 
+            temp_audiofile='temp-audio.m4a', 
+            remove_temp=True
+        )
+    else:
+        count = 0
+        for clip in clips:
+            file_name = "new" + "_" + str(count) + ".mp4"
+            output_file = os.path.join(output_video_path, file_name)
+            
+            print(output_file)
+            clip.write_videofile(
+                output_file,  
+                codec='libx264', 
+                audio_codec='aac', 
+                temp_audiofile='temp-audio.m4a', 
+                remove_temp=True
+            )
+            count += 1
 
 
 
@@ -215,7 +235,7 @@ def calc_segments():
     return segments
 
 
-def create_video(input_video_file, output_video_path):
+def create_video(input_video_file, output_video_path, separated):
     global total_time
 
 
@@ -235,8 +255,11 @@ def create_video(input_video_file, output_video_path):
 
     print(seg)
     
-    output_video_file = os.path.join(output_video_path, 'output_newnew.mp4')
-    cut_video(input_video_file, output_video_file, seg)
+    
+    cut_video(input_video_file, output_video_path, seg, separated)
+
+
+    
     # try:
     #     cut_video(input_video_file, output_video_file, segments)
     #     return True

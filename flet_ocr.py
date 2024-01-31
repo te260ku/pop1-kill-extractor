@@ -104,7 +104,7 @@ def main(page):
 
     
 
-    
+    enable_separeted_output = False
     
     output_folder = ft.Ref[ft.Text]()
     # page.add(target_file)
@@ -299,7 +299,11 @@ def main(page):
     ************************************************************'''
     
 
-
+    def seconds_to_hms(seconds):
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = seconds % 60
+        return "{:02d}:{:02d}:{:02d}".format(int(hours), int(minutes), int(seconds))
 
 
     '''************************************************************
@@ -349,6 +353,7 @@ def main(page):
         
         for i in range(0, len(detected_kill_times)):
             thumbnail = preview_thumbnails[i]
+            formatted_kill_time = seconds_to_hms(detected_kill_times[i])
             panels.append(
                 ft.Container(
                     content=ft.Column(
@@ -361,7 +366,7 @@ def main(page):
                                 # repeat=ft.ImageRepeat.NO_REPEAT,
                                 # border_radius=ft.border_radius.all(10),
                             ), 
-                            ft.Text("00:00")
+                            ft.Text(formatted_kill_time)
                         ], 
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER
                     ), 
@@ -405,7 +410,9 @@ def main(page):
             count += 1
         page.update()
     
+
     def extract_button_clicked(e):
+        print(enable_separeted_output_checkbox.value)
         if (is_empty_str(output_video_file_name_textbox.value)):
             # 出力ファイル名が入力されていない場合は処理を実行しない
             alert_modal_text_value = "出力ファイル名を入力してください\n"
@@ -413,7 +420,8 @@ def main(page):
             show_alert_modal()
             return
         
-        ocr.create_video(input_video_file=input_video_path, output_video_path=output_directory_path.current.value)
+        
+        ocr.create_video(input_video_file=input_video_path, output_video_path=output_directory_path.current.value, separated=enable_separeted_output_checkbox.value)
         # export_video_result = "エクスポートが完了しました" if result else "エクスポートに失敗しました"
         # print(export_video_result)
     '''************************************************************
@@ -523,8 +531,13 @@ def main(page):
     # copy_kill_time_log_button = ft.ElevatedButton(text="クリップボードにコピー", on_click=button_clicked)
     # save_kill_time_log_button = ft.ElevatedButton(text="保存", on_click=button_clicked)
 
+    
+
 
     def kill_time_offset_textbox_changed(e):
+         return e.control.value
+    
+    def kill_time_interval_textbox_changed(e):
          return e.control.value
     
     def ign_textbox_changed(e):
@@ -532,12 +545,25 @@ def main(page):
     
     def output_video_file_name_textbox_changed(e):
          return e.control.value
+    
+    def enable_separeted_output_checkbox_changed(e):
+        enable_separeted_output = e.control.value
+        
+    
+
+    enable_separeted_output_checkbox = ft.Checkbox(label="個別で出力", on_change=enable_separeted_output_checkbox_changed)
         
 
     kill_time_offset_textbox = ft.TextField(
         label="オフセット",
         width=150, 
         on_change=kill_time_offset_textbox_changed,
+    )
+
+    kill_time_interval_textbox = ft.TextField(
+        label="インターバル",
+        width=150, 
+        on_change=kill_time_interval_textbox_changed,
     )
 
     ign_textbox = ft.TextField(
@@ -799,6 +825,8 @@ def main(page):
                                     
                                     get_normal_button_container(output_video_file_name_textbox),
                                     get_normal_button_container(kill_time_offset_textbox),
+                                    get_normal_button_container(kill_time_interval_textbox),
+                                    get_normal_button_container(enable_separeted_output_checkbox), 
                                     
                                     
                 
