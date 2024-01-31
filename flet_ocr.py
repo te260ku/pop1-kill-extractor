@@ -17,6 +17,7 @@ import math
 import threading
 
 input_video_path = ""
+detected_kill_times = []
 
 
 
@@ -306,6 +307,7 @@ def main(page):
     ************************************************************'''
     def start_button_clicked(e):
         global input_video_path
+        global detected_kill_times
 
     
 
@@ -565,9 +567,10 @@ def main(page):
     app_close_button = ft.ElevatedButton(text='アプリ終了', on_click=app_close)
 
 
-    # detected_kill_times = [10, 20]
+    
     def on_copy_kill_time_button_clicked(e):
-        page.set_clipboard("This value comes from Flet app")
+        global detected_kill_times
+        page.set_clipboard(str(detected_kill_times))
         page.dialog = copy_kill_time_dialog
         copy_kill_time_dialog.open = True
         page.update()
