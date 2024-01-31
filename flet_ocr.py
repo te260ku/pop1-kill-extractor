@@ -228,26 +228,26 @@ def main(page):
         alignment=ft.alignment.center, 
     )
 
-    panels = []
-    for i in range(0, 10):
-        panels.append(
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Image(
-                            # src=f"https://picsum.photos/150/150?{i}",
-                            src_base64=initial_image_base64, 
-                            # fit=ft.ImageFit.FIT_WIDTH,
-                            width=70, 
-                            # repeat=ft.ImageRepeat.NO_REPEAT,
-                            # border_radius=ft.border_radius.all(10),
-                        ), 
-                        ft.Text("00:00")
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                ), 
-            ) 
-        )
+    # panels = []
+    # for i in range(0, 10):
+    #     panels.append(
+    #         ft.Container(
+    #             content=ft.Column(
+    #                 [
+    #                     ft.Image(
+    #                         # src=f"https://picsum.photos/150/150?{i}",
+    #                         src_base64=initial_image_base64, 
+    #                         # fit=ft.ImageFit.FIT_WIDTH,
+    #                         width=70, 
+    #                         # repeat=ft.ImageRepeat.NO_REPEAT,
+    #                         # border_radius=ft.border_radius.all(10),
+    #                     ), 
+    #                     ft.Text("00:00")
+    #                 ], 
+    #                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    #             ), 
+    #         ) 
+    #     )
     
     # for i in range(0, 10):
     #     c = ft.Container(
@@ -261,7 +261,7 @@ def main(page):
     #         )
     #     image_panels.controls.append(c)
     
-    # image_panels = ft.Row(controls=[images])
+
 
     forward_preview_image_list_button = ft.IconButton(
         icon=ft.icons.KEYBOARD_ARROW_LEFT, 
@@ -282,7 +282,7 @@ def main(page):
     image_panels_container_dummy = ft.Container(
         # content=image_panels, 
         width=300, 
-        height=70, 
+        height=80, 
         border=ft.border.all(1, ft.colors.WHITE), 
         # padding=ft.padding.symmetric(0, 20),
         # margin=ft.margin.symmetric(0, 20),
