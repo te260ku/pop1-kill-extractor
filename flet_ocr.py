@@ -15,66 +15,38 @@ from tqdm import tqdm
 import asyncio
 import math
 import threading
+from enum import *
+
+class ViewType(Enum):
+    MAIN = auto()
+    SETTING = auto()
+    INFO = auto()
 
 input_video_path = ""
 detected_kill_times = []
-
+current_view = ViewType.MAIN
 
 
 def main(page):
     set_page(page)
 
+    
+    
 
-    settings_view = ft.Text("settings")
-    info_view = ft.Text("info")
+    
 
-
-    def home_button_clicked(e):
-        page.remove(settings_view)
-        page.remove(info_view)
-        page.add(home_column)
-    def settings_button_clicked(e):
-        page.dialog = settings_dialog
-        settings_dialog.open = True
-        page.update()
-    def info_button_clicked(e):
-        page.remove(home_column)
-        page.remove(settings_view)
-        page.add(info_view)
-
-    appbar_items = [
-            ft.PopupMenuItem(text="Home", on_click=home_button_clicked),
-            ft.PopupMenuItem(),  # divider
-            ft.PopupMenuItem(text="Settings", on_click=settings_button_clicked), 
-            ft.PopupMenuItem(),  # divider
-            ft.PopupMenuItem(text="Info", on_click=info_button_clicked)
-        ]
     
 
 
-    appbar = ft.AppBar(
-            # leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
-            leading_width=100,
-            title=ft.Text("POP1 Kill Extractor",size=22, text_align="start"),
-            center_title=False,
-            toolbar_height=55,
-            bgcolor=ft.colors.LIGHT_BLUE_ACCENT_700,
-            actions=[
-                ft.Container(
-                    content=ft.PopupMenuButton(
-                        items=appbar_items
-                    ),
-                    margin=ft.margin.only(left=50, right=25), 
-                    
-                )
-            ],
-        )
-    page.appbar = appbar
+    
+
+
+
 
     progress_bar = ft.ProgressBar(
         width=300, 
         color="pink", 
-        bgcolor="#eeeeee"
+        bgcolor="#eeeeee", 
     )
 
 
@@ -125,7 +97,7 @@ def main(page):
     ************************************************************'''
     preview_image = ft.Image(
         fit=ft.ImageFit.FIT_WIDTH, 
-        # height=192/2,
+        # height=1920*0.1,
         width=400, 
         src_base64 = initial_image_base64, 
         repeat=ft.ImageRepeat.NO_REPEAT,
@@ -456,7 +428,14 @@ def main(page):
         "ファイルを選択", 
         on_click=show_file_picker
         )
-    input_file_textbox = ft.TextField(ref=target_file, label="ファイル", read_only=True, width=200)
+    input_file_textbox = ft.TextField(
+        ref=target_file, 
+        label="ファイル", 
+        read_only=True, 
+        width=150, 
+        height=40,
+        text_size=15,
+        )
     '''************************************************************
     ** 
     ************************************************************'''
@@ -479,7 +458,14 @@ def main(page):
         # icon=ft.icons.FOLDER_OPEN,
         on_click=lambda _: output_directory_selector.get_directory_path(),
         )
-    output_file_textbox = ft.TextField(ref=output_directory_path, label="ディレクトリ", read_only=True, width=200,)
+    output_file_textbox = ft.TextField(
+        ref=output_directory_path, 
+        label="ディレクトリ", 
+        read_only=True, 
+        width=150,
+        height=40,
+        text_size=15,
+        )
     '''************************************************************
     ** 
     ************************************************************'''
@@ -510,18 +496,20 @@ def main(page):
 
     kill_time_table = ft.Column(
         spacing=5,
-        height=150,
-        width=300,
+        # height=150,
+        # width=300,
         scroll=ft.ScrollMode.ALWAYS,
         on_scroll_interval=0,
     )
     kill_time_table_container = ft.Container(
         content=kill_time_table, 
         border=ft.border.all(1, ft.colors.WHITE), 
+        width=100,
+        height=320,
         # border_radius=ft.border_radius.all(5), 
     )
-    for i in range(0, 10):
-        kill_time_table.controls.append(ft.Text(f"Text line {i}", key=str(i), selectable=True))
+    for i in range(0, 20):
+        kill_time_table.controls.append(ft.Text("00:00", selectable=True))
     '''************************************************************
     ** 
     ************************************************************'''
@@ -557,24 +545,32 @@ def main(page):
     kill_time_offset_textbox = ft.TextField(
         label="オフセット",
         width=150, 
+        height=40,
+        text_size=15,
         on_change=kill_time_offset_textbox_changed,
     )
 
     kill_time_interval_textbox = ft.TextField(
         label="インターバル",
         width=150, 
+        height=40,
+        text_size=15,
         on_change=kill_time_interval_textbox_changed,
     )
 
     ign_textbox = ft.TextField(
         label="IGN",
         width=150, 
+        height=40,
+        text_size=15,
         on_change=kill_time_offset_textbox_changed,
     )
 
     output_video_file_name_textbox = ft.TextField(
         label="出力ファイル名",
         width=150, 
+        height=40,
+        text_size=15,
         on_change=kill_time_offset_textbox_changed,
     )
 
@@ -612,7 +608,13 @@ def main(page):
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e: print("Modal dialog dismissed!"),
     )
-    copy_kill_time_button = ft.ElevatedButton(text='コピー', on_click=on_copy_kill_time_button_clicked)
+    copy_kill_time_button = ft.IconButton(
+        on_click=on_copy_kill_time_button_clicked, 
+        icon=ft.icons.COPY,
+        # icon_color="blue400",
+        icon_size=20,
+        tooltip="コピー",
+        )
 
     
     def on_save_kill_time_button_clicked(e):
@@ -631,7 +633,14 @@ def main(page):
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e: print("Modal dialog dismissed!"),
     )
-    save_kill_time_button = ft.ElevatedButton(text='ファイルに保存', on_click=on_save_kill_time_button_clicked)
+    save_kill_time_button = ft.IconButton(
+        on_click=on_save_kill_time_button_clicked, 
+        icon=ft.icons.SAVE,
+        # icon_color="blue400",
+        icon_size=20,
+        tooltip="ファイルに保存",
+        )
+    
 
     
 
@@ -654,7 +663,7 @@ def main(page):
             content=c,
             # margin=10,
             # padding=10,
-            alignment=ft.alignment.center,
+            # alignment=ft.alignment.center,
             # border_radius=10,
             )
         return container
@@ -672,7 +681,7 @@ def main(page):
             content=c,
             margin=m,
             padding=p,
-            alignment=ft.alignment.center,
+            # alignment=ft.alignment.center,
             # border_radius=10,
             border=ft.border.all(1, ft.colors.WHITE), 
             width=w, 
@@ -692,7 +701,9 @@ def main(page):
 
 
     
-    page.add(
+    
+
+    
         # ft.Row(
         #     [
         #         get_normal_button_container(input_file_textbox),
@@ -726,9 +737,72 @@ def main(page):
     # ft.ElevatedButton("update", on_click=set_progress_bar_value), 
     # ft.ElevatedButton("value change", on_click=button_clicked2), 
 
-        ft.Row(
+    main_view = ft.Row(
             [
-                ft.Column(
+                get_container(ft.Row([ft.Column(
+
+                        
+                                [ 
+                                    ft.Row([
+                                        get_normal_button_container(input_file_textbox),
+                                        # get_normal_button_container(select_input_file_button), 
+                                    ]), 
+
+                                    
+                                    get_normal_button_container(ign_textbox),
+
+                                    # ft.Row([
+                                    #     get_normal_button_container(start_button), 
+                                    #     get_normal_button_container(stop_button),
+                                    # ]), 
+
+
+                                    ft.Divider(),
+                                    
+
+
+
+                                    ft.Row([
+                                        get_normal_button_container(output_file_textbox), 
+                                        # get_normal_button_container(select_output_file_button), 
+                                    ]), 
+                
+                                    
+                                    get_normal_button_container(output_video_file_name_textbox),
+                                    get_normal_button_container(kill_time_offset_textbox),
+                                    get_normal_button_container(kill_time_interval_textbox),
+                                    get_normal_button_container(enable_separeted_output_checkbox), 
+                                    
+                                    
+                
+                
+                                    # get_normal_button_container(extract_button),
+                                    # get_normal_button_container(processing_status_text), 
+                                    # ft.Text("ログ", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                        
+                                    # kill_time_log_container, 
+                                    
+                                    # kill_time_log_table, 
+                                    # ft.Row([copy_kill_time_button, save_kill_time_button])
+                                    
+                                     
+                                ],
+                                # alignment=ft.MainAxisAlignment.CENTER, 
+                                # horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )]), 
+                
+                # h=500, 
+                p=10
+                
+                
+                ),
+
+
+
+                ft.VerticalDivider(), 
+
+                get_container(
+                    ft.Column(
 
                                 [ 
                                     # get_normal_button_container(processing_status_text), 
@@ -737,7 +811,7 @@ def main(page):
                                     ft.Row([
                                             
 
-                                            get_container(
+                                            # get_container(
                                                 ft.Column([
                                                     ft.Row([
                                                         processing_status_text, 
@@ -754,32 +828,16 @@ def main(page):
                                                             image_panels_container, 
                                                             back_preview_image_list_button
                                                         ]
-                                                    )
+                                                    ), 
+
+                                                    
                                                     
                                                     ], 
                                             # alignment=ft.MainAxisAlignment.CENTER, 
                                             horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                                             # spacing=0, 
-                                            ), h=500, p=10
                                             ), 
                                         
-                                            # get_container(
-                                            #     ft.Column(
-                                            #         [
-                                            #         forward_preview_image_list_button, 
-                                            #         image_panels_container, 
-                                            #         back_preview_image_list_button
-                                            #         ], 
-                                            #         alignment=ft.MainAxisAlignment.CENTER, 
-                                            #         horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
-                                            #         # spacing=0,
-                                            #     ), 
-                                            #     h=260
-                                            # ), 
-                                
-                                
-                                            
-                                            
                                             ], 
                                             alignment=ft.MainAxisAlignment.CENTER, 
                                             vertical_alignment=ft.CrossAxisAlignment.CENTER
@@ -792,77 +850,242 @@ def main(page):
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             )
                         
-                    
+                    , 
+                    # h=500, 
+                    p=10
+                    ), 
 
-                    ,
                     ft.VerticalDivider(), 
 
-                    get_container(ft.Row([ft.Column(
-
-                        
-                                [ 
-                                    ft.Row([
-                                        get_normal_button_container(input_file_textbox),
-                                        get_normal_button_container(select_input_file_button), 
-                                    ]), 
-
-                                    
-                                    get_normal_button_container(ign_textbox),
-
-                                    ft.Row([
-                                        get_normal_button_container(start_button), 
-                                        get_normal_button_container(stop_button),
-                                    ]), 
-                                    
-
-
-
-                                    ft.Row([
-                                        get_normal_button_container(output_file_textbox), 
-                                        get_normal_button_container(select_output_file_button), 
-                                    ]), 
-                
-                                    
-                                    get_normal_button_container(output_video_file_name_textbox),
-                                    get_normal_button_container(kill_time_offset_textbox),
-                                    get_normal_button_container(kill_time_interval_textbox),
-                                    get_normal_button_container(enable_separeted_output_checkbox), 
-                                    
-                                    
-                
-                
-                                    get_normal_button_container(extract_button),
-                                    # get_normal_button_container(processing_status_text), 
-                                    # ft.Text("ログ", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                        
-                                    # kill_time_log_container, 
+                    get_container(
+                        ft.Column(
+                                [
                                     # ft.Text("検出したキル", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                    # kill_time_table_container, 
-                                    # kill_time_log_table, 
-                                    ft.Row([copy_kill_time_button, save_kill_time_button])
+                                    # ft.Text(
+                                    #     "検出済みキル",
+                                    #     size=18,
+                                    #     color=ft.colors.WHITE,
+                                    #     # bgcolor=ft.colors.BLUE_600,
+                                    #     # style=ft.TextThemeStyle.TITLE_MEDIUM,
+                                    #     style=ft.TextStyle(
+                                    #         decoration=ft.TextDecoration.UNDERLINE,
+                                    #         decoration_color=ft.colors.BLUE_600,
+                                    #         decoration_thickness=3,
+                                    #     )
+                                    # ),
+                                    ft.Row(
+                                        [
+                                            copy_kill_time_button, 
+                                            save_kill_time_button, 
+                                        ]
+                                    ), 
                                     
-                                     
-                                ],
-                                # alignment=ft.MainAxisAlignment.CENTER, 
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                )]), 
-                
-                # h=500, 
-                p=10
-                
-                
-                )
-                    
+                                    kill_time_table_container, 
+                                ], 
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+                            ),
 
-                    
-                
+                            p=10, 
+                            
+                            
+                        
+                    ),
+
+
+
+
             ], 
             expand=True, 
             alignment=ft.MainAxisAlignment.CENTER, 
-        ), 
+        )
     
 
+
+
+    def handle_menu_item_click(e):
+        print(f"{e.control.content.value}.on_click")
+        page.show_snack_bar(ft.SnackBar(content=ft.Text(f"{e.control.content.value} was clicked!")))
+        # appbar_text_ref.current.value = e.control.content.value
+        page.update()
+
+    def handle_on_open(e):
+        print(f"{e.control.content.value}.on_open")
+
+    def handle_on_close(e):
+        print(f"{e.control.content.value}.on_close")
+
+    def handle_on_hover(e):
+        print(f"{e.control.content.value}.on_hover")
+
+
+
+    menubar = ft.MenuBar(
+        expand=True,
+        style=ft.MenuStyle(
+            alignment=ft.alignment.top_left,
+            # bgcolor=ft.colors.RED_100,
+            mouse_cursor={ft.MaterialState.HOVERED: ft.MouseCursor.WAIT,
+                          ft.MaterialState.DEFAULT: ft.MouseCursor.ZOOM_OUT},
+        ),
+        controls=[
+            ft.SubmenuButton(
+                content=ft.Text("General"),
+                # on_open=handle_on_open,
+                # on_close=handle_on_close,
+                # on_hover=handle_on_hover,
+                controls=[
+                    ft.MenuItemButton(
+                        content=ft.Text("About"),
+                        leading=ft.Icon(ft.icons.INFO),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=handle_menu_item_click
+                    ),
+                    # ft.MenuItemButton(
+                    #     content=ft.Text("Save"),
+                    #     leading=ft.Icon(ft.icons.SAVE),
+                    #     style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                    #     on_click=handle_menu_item_click
+                    # ),
+                    ft.MenuItemButton(
+                        content=ft.Text("Quit"),
+                        leading=ft.Icon(ft.icons.CLOSE),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=app_close
+                    )
+                ]
+            ),
+            ft.SubmenuButton(
+                content=ft.Text("Analyze"),
+                # on_open=handle_on_open,
+                # on_close=handle_on_close,
+                # on_hover=handle_on_hover,
+                controls=[
+                    ft.MenuItemButton(
+                        content=ft.Text("開始"),
+                        leading=ft.Icon(ft.icons.INFO),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=handle_menu_item_click
+                    ),
+                    ft.MenuItemButton(
+                        content=ft.Text("停止"),
+                        leading=ft.Icon(ft.icons.SAVE),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=handle_menu_item_click
+                    ),
+                    ft.MenuItemButton(
+                        content=ft.Text("Quit"),
+                        leading=ft.Icon(ft.icons.CLOSE),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=app_close
+                    )
+                ]
+            ),
+            ft.SubmenuButton(
+                content=ft.Text("Export"),
+                # on_open=handle_on_open,
+                # on_close=handle_on_close,
+                # on_hover=handle_on_hover,
+                controls=[
+                    ft.MenuItemButton(
+                        content=ft.Text("出力"),
+                        leading=ft.Icon(ft.icons.INFO),
+                        style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                        on_click=handle_menu_item_click
+                    ),
+                    # ft.MenuItemButton(
+                    #     content=ft.Text(""),
+                    #     leading=ft.Icon(ft.icons.SAVE),
+                    #     style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                    #     on_click=handle_menu_item_click
+                    # ),
+                    # ft.MenuItemButton(
+                    #     content=ft.Text("Quit"),
+                    #     leading=ft.Icon(ft.icons.CLOSE),
+                    #     style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
+                    #     on_click=app_close
+                    # )
+                ]
+            ),
+        ]
     )
+
+
+
+
+    page.add(
+        ft.Row([menubar]),
+    )
+
+    
+
+    page.add(main_view)
+
+
+
+    
+    setting_view = ft.Text("settings")
+    info_view = ft.Text("info")
+
+    view_list = {ViewType.MAIN : main_view, ViewType.SETTING : setting_view,  ViewType.INFO : info_view}
+
+
+    def home_button_clicked(e):
+        change_view_type(ViewType.MAIN)
+
+    def settings_button_clicked(e):
+        change_view_type(ViewType.SETTING)
+
+    def info_button_clicked(e):
+        change_view_type(ViewType.INFO)
+
+    def change_view_type(view_type):
+        global current_view
+        page.remove(view_list[current_view])
+        current_view = view_type
+        page.add(view_list[current_view])
+        page.update()
+
+
+    appbar_items = [
+            ft.PopupMenuItem(text="Home", on_click=home_button_clicked),
+            ft.PopupMenuItem(),
+            ft.PopupMenuItem(text="Settings", on_click=settings_button_clicked), 
+            ft.PopupMenuItem(),
+            ft.PopupMenuItem(text="Info", on_click=info_button_clicked)
+        ]
+    
+
+
+    appbar = ft.AppBar(
+            # leading=ft.Icon(ft.icons.GRID_GOLDENRATIO_ROUNDED),
+            leading_width=100,
+            title=ft.Container(
+                content=ft.Text("POP1 Kill Extractor",size=22, text_align="start"),
+                padding=5, 
+            ), 
+            center_title=False,
+            toolbar_height=55,
+            bgcolor=ft.colors.LIGHT_BLUE_ACCENT_700,
+            actions=[
+                ft.Container(
+                    content=ft.PopupMenuButton(
+                        items=appbar_items
+                    ),
+                    margin=ft.margin.only(left=50, right=25), 
+                )
+            ],
+        )
+    # page.appbar = appbar
+
+
+
+
+    
+
+
+
+
+
 
 
     page.window_width = 1000
@@ -870,7 +1093,6 @@ def main(page):
 
 
 
-    # page.add()
 
 
     def close_settings_dialog(e):
