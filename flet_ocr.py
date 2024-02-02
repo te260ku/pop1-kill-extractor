@@ -161,10 +161,19 @@ def main(page):
     
 
     def set_p_value():
+        prev_progress_value = 0
+        current_progress_value = 0
+        progress_value_update_threshold = 0.05
         while ocr.finished is False:
-            progress_bar.value = ocr.progress_value
-            progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
-            page.update()
+            current_progress_value = ocr.progress_value
+
+            if (current_progress_value - prev_progress_value > progress_value_update_threshold):
+                
+
+                prev_progress_value = current_progress_value
+                progress_bar.value = current_progress_value
+                progress_value.current.value = f"{round(current_progress_value*100, 2)}%"
+                page.update()
             
         progress_bar.value = 1.0
         progress_value.current.value = f"{round(ocr.progress_value*100, 2)}%"
@@ -254,7 +263,7 @@ def main(page):
     image_panels_container_dummy = ft.Container(
         # content=image_panels, 
         width=300, 
-        height=80, 
+        height=120, 
         border=ft.border.all(1, ft.colors.WHITE), 
         # padding=ft.padding.symmetric(0, 20),
         # margin=ft.margin.symmetric(0, 20),
@@ -330,6 +339,7 @@ def main(page):
                 ft.Container(
                     content=ft.Column(
                         [
+                            ft.Text(str(i+1)),
                             ft.Image(
                                 # src=f"https://picsum.photos/150/150?{i}",
                                 src_base64=convert_cv_to_base64(thumbnail), 
@@ -361,12 +371,15 @@ def main(page):
         image_panels_container_processed.content = image_panels
         image_panels_container.content = image_panels_container_processed
         image_panels_container.disabled = False
+        update_kill_time_log(detected_kill_times)
         page.update()
-        update_kill_time_log()
+        
 
 
-    def update_kill_time_log():
-        pass
+    def update_kill_time_log(kill_times):
+        for kill_time in kill_times:
+            val = seconds_to_hms(kill_time)
+            kill_time_table.controls.append(ft.Text(val, selectable=True))
 
 
     def stop_button_clicked(e):
@@ -433,7 +446,7 @@ def main(page):
         label="ファイル", 
         read_only=True, 
         width=150, 
-        height=40,
+        # height=40,
         text_size=15,
         )
     '''************************************************************
@@ -508,8 +521,8 @@ def main(page):
         height=320,
         # border_radius=ft.border_radius.all(5), 
     )
-    for i in range(0, 20):
-        kill_time_table.controls.append(ft.Text("00:00", selectable=True))
+    # for i in range(0, 20):
+    #     kill_time_table.controls.append(ft.Text("00:00", selectable=True))
     '''************************************************************
     ** 
     ************************************************************'''
@@ -745,7 +758,7 @@ def main(page):
                                 [ 
                                     ft.Row([
                                         get_normal_button_container(input_file_textbox),
-                                        # get_normal_button_container(select_input_file_button), 
+                                        get_normal_button_container(select_input_file_button), 
                                     ]), 
 
                                     
@@ -964,7 +977,7 @@ def main(page):
                         content=ft.Text("開始"),
                         leading=ft.Icon(ft.icons.INFO),
                         style=ft.ButtonStyle(bgcolor={ft.MaterialState.HOVERED: ft.colors.GREEN_500}),
-                        on_click=handle_menu_item_click
+                        on_click=start_button_clicked
                     ),
                     ft.MenuItemButton(
                         content=ft.Text("停止"),
