@@ -29,18 +29,9 @@ detected_kill_frames = []
 finished = False
 progress_value = 0
 
-total_time = None
 
 
 
-
-# 動画を読み込む
-# cap = cv2.VideoCapture("./kanbu_2.mp4")
-# # フレームレートを取得
-# fps = cap.get(cv2.CAP_PROP_FPS)
-# # 総フレーム数を取得
-# total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-# print(total_frames)
 
 
 def nothing(x):
@@ -55,7 +46,7 @@ def frames_to_seconds(frame_count, fps):
 
 
 
-def proc(img_raw):
+def get_ocr_result(img_raw):
     height = img_raw.shape[0]
     width = img_raw.shape[1]
 
@@ -75,14 +66,6 @@ def proc(img_raw):
     return str_data
 
 
-# def proc_str(str_data):
-#     result = ign in str_data
-#     if result == True:
-#         estimated_kill_time = '{{:.{:d}f}}'.format(2).format(current_sec/1000)
-#         kill_time.append(estimated_kill_time)
-#         print('Estimated Kill Time: {}'.format(estimated_kill_time))
-#     return result
-
 def get_preview_thumbnail(sec):
     global cap
     global fps
@@ -91,7 +74,7 @@ def get_preview_thumbnail(sec):
     ret, frame = cap.read()
     return frame
 
-def proc_new(video_path=None, ign=None):
+def proc(video_path=None, ign=None):
     global cap
     global fps
     global detected_kill_frames
@@ -128,16 +111,13 @@ def proc_new(video_path=None, ign=None):
             current_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
 
             progress_value = round(current_frame/total_frames, 3)
-            # print(progress_value)
-            # print(current_frame)
 
             # 指定した時間ごとにフレームを抽出
             if frame_count % int(fps*frame_freq) == 0:
                 current_time_sec = current_time_ms / 1000
                 # print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {current_time_sec}秒")
-                result = proc(frame)
+                result = get_ocr_result(frame)
                 if (ign in result):
-                    # print("detected")
                     minutes, seconds = divmod(current_time_sec, 60)
                     print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {int(minutes)}分 {seconds:.2f}秒")
                     preview_thumbnails.append(frame)
@@ -152,13 +132,7 @@ def proc_new(video_path=None, ign=None):
                     
             
             frame_count += 1
-            
-            # print(progress_value)
-            # progress_value = 0.1
-            
-            # flet_ocr.set_progress_bar_value(progress_value)
 
-            
         except KeyboardInterrupt:
             break
     cap.release()
@@ -170,9 +144,10 @@ def proc_new(video_path=None, ign=None):
 
 
 def cut_video(input_file, output_video_path, segments, separated):
-    
+
     clips = []
-    # enumerate(tqdm(segments, desc='Processing', unit='segment')):
+
+    # 動画を切り出す
     for segment in segments:
         start_time = segment[0]
         end_time = segment[1]
@@ -181,7 +156,9 @@ def cut_video(input_file, output_video_path, segments, separated):
 
     print(clips)
 
+
     if (separated == False):
+        # 結合の場合
         output_file = os.path.join(output_video_path, 'output_newnew.mp4')
         final_clip = concatenate_videoclips(clips)
         # final_clip.write_videofile(output_file)
@@ -194,6 +171,7 @@ def cut_video(input_file, output_video_path, segments, separated):
             remove_temp=True
         )
     else:
+        # 個別の場合
         count = 0
         for clip in clips:
             file_name = "new" + "_" + str(count) + ".mp4"
@@ -212,17 +190,15 @@ def cut_video(input_file, output_video_path, segments, separated):
 
 
 
-def calc_segments(kill_times):
+def calc_segments(kill_times, total_time):
 
     def trim_within_total_time(t):
-        global total_time
         result = t
         if t < 0:
             result = 0
         elif t > total_time:
             result = int(total_time)
         return result
-
 
     segments = []
     # tm = [4, 17]
@@ -232,16 +208,16 @@ def calc_segments(kill_times):
         end_time = trim_within_total_time(int(peak_time+3))
         
         segments.append((start_time, end_time))
+
     return segments
 
 
 def create_video(input_video_file, output_video_path, separated, kill_times):
-    global total_time
-
-
     print("動画を切り出しています")
 
-
+    '''
+    動画の合計時間を計算
+    '''
     cap = cv2.VideoCapture(input_video_file)
     # フレームレートを取得
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -251,52 +227,10 @@ def create_video(input_video_file, output_video_path, separated, kill_times):
     cap.release()
 
 
-    seg = calc_segments(kill_times)
+    # クリップにする動画の区間のリストを取得
+    segments = calc_segments(kill_times, total_time)
+    print(segments)
 
-    print(seg)
-    
-    
-    cut_video(input_video_file, output_video_path, seg, separated)
+    # 動画を書き出す
+    cut_video(input_video_file, output_video_path, segments, separated)
 
-
-    
-    # try:
-    #     cut_video(input_video_file, output_video_file, segments)
-    #     return True
-    # except:
-    #     return False
-
-
-# while True:
-#     try:
-#         # フレームの読み込み
-#         ret, frame = cap.read()
-#         # フレームが読み込めなくなったら終了
-#         if not ret:
-#             break
-
-#         current_time_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
-
-#         # 指定した時間ごとにフレームを抽出
-#         if frame_count % int(fps*frame_freq) == 0:
-#             current_time_sec = current_time_ms / 1000
-#             # print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {current_time_sec}秒")
-#             result = proc(frame)
-#             if (ign in result):
-#                 # print("detected")
-#                 minutes, seconds = divmod(current_time_sec, 60)
-#                 print(f"フレーム {frame_count // int(fps)}: 現在の再生時間 {int(minutes)}分 {seconds:.2f}秒")
-#                 detected_count += 1
-#                 detected = True
-#                 new_frame_pos = int(cap.get(cv2.CAP_PROP_POS_FRAMES) + fps * 10)
-#                 if new_frame_pos <= total_frames:
-#                     cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame_pos)
-                
-#         frame_count += 1
-
-#     except KeyboardInterrupt:
-#         break
-
-# cap.release()
-
-# print("detected count = " + str(detected_count))

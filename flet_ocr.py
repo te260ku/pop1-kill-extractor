@@ -295,7 +295,7 @@ def main(page):
         thread1 = threading.Thread(target=set_p_value)
         thread1.start()
 
-        detected_kill_times = ocr.proc_new(video_path=input_video_path, ign=ign_textbox.value)
+        detected_kill_times = ocr.proc(video_path=input_video_path, ign=ign_textbox.value)
 
         
         print(detected_kill_times)
