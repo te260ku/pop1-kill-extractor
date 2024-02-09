@@ -212,8 +212,8 @@ def cut_video(input_file, output_video_path, segments, separated):
 
 
 
-def calc_segments():
-    global detected_kill_times
+def calc_segments(kill_times):
+
     def trim_within_total_time(t):
         global total_time
         result = t
@@ -226,7 +226,7 @@ def calc_segments():
 
     segments = []
     # tm = [4, 17]
-    tm = detected_kill_times
+    tm = kill_times
     for peak_time in tm:
         start_time = trim_within_total_time(int(peak_time-3))
         end_time = trim_within_total_time(int(peak_time+3))
@@ -235,7 +235,7 @@ def calc_segments():
     return segments
 
 
-def create_video(input_video_file, output_video_path, separated):
+def create_video(input_video_file, output_video_path, separated, kill_times):
     global total_time
 
 
@@ -251,7 +251,7 @@ def create_video(input_video_file, output_video_path, separated):
     cap.release()
 
 
-    seg = calc_segments()
+    seg = calc_segments(kill_times)
 
     print(seg)
     
