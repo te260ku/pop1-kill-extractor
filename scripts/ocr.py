@@ -157,9 +157,10 @@ def cut_video(input_file, output_video_path, segments, separated):
     print(clips)
 
 
+    output_file_with_extension = output_video_path + ".mp4"
     if (separated == False):
         # 結合の場合
-        output_file = os.path.join(output_video_path, 'output_newnew.mp4')
+        output_file = output_file_with_extension
         final_clip = concatenate_videoclips(clips)
         # final_clip.write_videofile(output_file)
         # final_clip.write_videofile(output_file, audio_codec='aac')
@@ -174,8 +175,11 @@ def cut_video(input_file, output_video_path, segments, separated):
         # 個別の場合
         count = 0
         for clip in clips:
-            file_name = "new" + "_" + str(count) + ".mp4"
-            output_file = os.path.join(output_video_path, file_name)
+            base_dir_pair = os.path.split(output_file_with_extension)
+            output_video_path_no_file_name = base_dir_pair[0]
+            base_file_name_without_extension = os.path.splitext(base_dir_pair[1])[0]
+            file_name = base_file_name_without_extension + "_" + str(count) + ".mp4"
+            output_file = os.path.join(output_video_path_no_file_name, file_name)
             
             print(output_file)
             clip.write_videofile(

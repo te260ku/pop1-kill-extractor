@@ -391,14 +391,14 @@ def main(page):
         print(enable_separeted_output_checkbox.value)
         alert_modal_text_value = ""
         error = False
-        if (is_empty_str(output_video_file_name_textbox.value)):
+        if (is_empty_str(output_file_textbox.value)):
             # 出力ファイル名が入力されていない場合は処理を実行しない
             alert_modal_text_value += "出力ファイル名を入力してください\n"
             error = True
-        if (is_empty_str(output_video_file_name_textbox.value)):
-            # 出力ディレクトリが指定されていない場合は処理を実行しない
-            alert_modal_text_value += "保存するフォルダを選択してください\n"
-            error = True
+        # if (is_empty_str(output_video_file_name_textbox.value)):
+        #     # 出力ディレクトリが指定されていない場合は処理を実行しない
+        #     alert_modal_text_value += "保存するフォルダを選択してください\n"
+        #     error = True
         if (error):
             alert_modal_text.value = alert_modal_text_value
             show_alert_modal()
@@ -453,18 +453,21 @@ def main(page):
     def get_directory_result(e: ft.FilePickerResultEvent):
         if e.path:
             output_directory_path.current.value = e.path
+            print(e.path)
             page.update()
 
     output_directory_selector = ft.FilePicker(on_result=get_directory_result)
     page.overlay.append(output_directory_selector)
     select_output_file_button = ft.IconButton(
         icon=ft.icons.FOLDER_OPEN,
-        
-        on_click=lambda _: output_directory_selector.get_directory_path(),
+        on_click=lambda _: output_directory_selector.save_file(
+            file_type = ft.FilePickerFileType.CUSTOM,
+            allowed_extensions = ["mp4"]
+            ),
         )
     output_file_textbox = ft.TextField(
         ref=output_directory_path, 
-        label="ディレクトリ", 
+        label="出力先", 
         read_only=True, 
         width=150, 
         # height=40,
@@ -678,7 +681,7 @@ def main(page):
                             get_normal_button_container(select_output_file_button), 
                         ]), 
     
-                        get_normal_button_container(output_video_file_name_textbox),
+                        # get_normal_button_container(output_video_file_name_textbox),
                         get_normal_button_container(kill_time_offset_textbox),
                         get_normal_button_container(kill_time_interval_textbox),
                         get_normal_button_container(enable_separeted_output_checkbox),  
