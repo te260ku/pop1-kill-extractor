@@ -10,9 +10,16 @@ import asyncio
 import flet_ocr
 from os.path import dirname
 
+class ProcParams():
+    def __init__(self, kill_time_start_offset, kill_time_end_offset, kill_time_interval, ign):
+        self.kill_time_start_offset = kill_time_start_offset
+        self.kill_time_end_offset = kill_time_end_offset
+        self.kill_time_interval = kill_time_interval
+        self.ign = ign
+
 
 # 各種設定
-ign = None
+# ign = None
 frame_freq = 1.0
 kill_time_start_offset = 6
 kill_time_end_offset = 3
@@ -74,7 +81,7 @@ def get_preview_thumbnail(sec):
     ret, frame = cap.read()
     return frame
 
-def proc(video_path=None, ign=None):
+def proc(video_path=None, ign=None, proc_params=ProcParams(0,0,0,0)):
     global cap
     global fps
     global detected_kill_frames
@@ -86,6 +93,8 @@ def proc(video_path=None, ign=None):
     frame_count = 0
     detected_count = 0
     detected_kill_times = []
+
+    # ign = proc_params.ign
 
 
     cap = cv2.VideoCapture(video_path)

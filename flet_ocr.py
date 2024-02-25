@@ -22,6 +22,10 @@ class ViewType(Enum):
     SETTING = auto()
     INFO = auto()
 
+
+
+
+
 input_video_path = ""
 detected_kill_times = []
 current_view = ViewType.MAIN
@@ -295,7 +299,16 @@ def main(page):
         thread1 = threading.Thread(target=set_p_value)
         thread1.start()
 
-        detected_kill_times = ocr.proc(video_path=input_video_path, ign=ign_textbox.value)
+        # 設定項目の値をまとめる
+        proc_params = ocr.ProcParams(
+            kill_time_start_offset_textbox.value, 
+            kill_time_end_offset_textbox.value, 
+            kill_time_interval_textbox.value,
+            ign_textbox.value
+        )
+
+
+        detected_kill_times = ocr.proc(video_path=input_video_path, ign=ign_textbox.value, proc_params=proc_params)
 
         
         print(detected_kill_times)
@@ -447,6 +460,7 @@ def main(page):
         width=150, 
         # height=40,
         text_size=15,
+        label_style=ft.TextStyle(size=12),
         )
 
     
@@ -472,6 +486,7 @@ def main(page):
         width=150, 
         # height=40,
         text_size=15,
+        label_style=ft.TextStyle(size=12),
         )
     '''************************************************************
     ** 
@@ -620,36 +635,48 @@ def main(page):
     '''************************************************************
     ** 設定エリア
     ************************************************************'''
-    kill_time_offset_textbox = ft.TextField(
-        label="オフセット",
-        width=150, 
+    kill_time_start_offset_textbox = ft.TextField(
+        label="開始オフセット",
+        width=80, 
         height=40,
         text_size=15,
+        label_style=ft.TextStyle(size=12),
+        input_filter=ft.NumbersOnlyInputFilter()
     )
+    kill_time_start_offset_textbox.value = 6
+
+    kill_time_end_offset_textbox = ft.TextField(
+        label="終了オフセット",
+        width=80, 
+        height=40,
+        text_size=15,
+        label_style=ft.TextStyle(size=12),
+        input_filter=ft.NumbersOnlyInputFilter()
+    )
+    kill_time_end_offset_textbox.value = 3
 
     kill_time_interval_textbox = ft.TextField(
         label="インターバル",
-        width=150, 
+        width=80, 
         height=40,
         text_size=15,
+        label_style=ft.TextStyle(size=12),
+        input_filter=ft.NumbersOnlyInputFilter()
     )
+    kill_time_interval_textbox.value = 10
 
     ign_textbox = ft.TextField(
         label="IGN",
         width=150, 
         height=40,
         text_size=15,
-    )
-
-    output_video_file_name_textbox = ft.TextField(
-        label="出力ファイル名",
-        width=150, 
-        height=40,
-        text_size=15,
+        label_style=ft.TextStyle(size=12),
     )
         
 
-    enable_separeted_output_checkbox = ft.Checkbox(label="個別で出力")
+    enable_separeted_output_checkbox = ft.Checkbox(
+        label="個別で出力", 
+        )
     '''************************************************************
     ** 
     ************************************************************'''
@@ -682,7 +709,12 @@ def main(page):
                         ]), 
     
                         # get_normal_button_container(output_video_file_name_textbox),
-                        get_normal_button_container(kill_time_offset_textbox),
+                        ft.Row([
+                            get_normal_button_container(kill_time_start_offset_textbox),
+                            get_normal_button_container(kill_time_end_offset_textbox),
+                        ]),
+                        
+                        
                         get_normal_button_container(kill_time_interval_textbox),
                         get_normal_button_container(enable_separeted_output_checkbox),  
                     ],
